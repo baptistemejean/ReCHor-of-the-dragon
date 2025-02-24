@@ -11,7 +11,7 @@ import java.util.Objects;
  * @param legs The list of legs that form the journey.
  */
 public record Journey(List<Leg> legs) {
-
+    private static int d;
     /**
      * Constructs a Journey while ensuring validity constraints:
      * - The journey must contain at least one leg.
