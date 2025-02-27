@@ -66,7 +66,7 @@ public final class FormatterFr {
      * @return A formatted platform name, or an empty string if not applicable.
      */
     public static String formatPlatformName(Stop stop){
-        if (isStation(stop) || stop.platformName().isEmpty()){
+        if (isStation(stop)){
             return "";
         }
         return stop.platformName().matches("^\\d.*") ? "voie " + stop.platformName() : "quai " + stop.platformName();
