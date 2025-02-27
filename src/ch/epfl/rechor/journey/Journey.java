@@ -56,7 +56,7 @@ public record Journey(List<Leg> legs) {
     /**
      * Sealed interface representing a leg of a journey.
      */
-    public sealed interface Leg permits Leg.IntermediateStop, Leg.Transport, Leg.Foot {
+    public sealed interface Leg permits Leg.Transport, Leg.Foot, Leg.IntermediateStop {
         Stop depStop();
         LocalDateTime depTime();
         Stop arrStop();
@@ -87,12 +87,12 @@ public record Journey(List<Leg> legs) {
 
             @Override
             public Stop depStop() {
-                return null;
+                return stop();
             }
 
             @Override
             public Stop arrStop() {
-                return null;
+                return stop();
             }
 
             @Override
@@ -203,32 +203,28 @@ public record Journey(List<Leg> legs) {
     private static Stop getDepartureStop(Leg leg) {
         return switch (leg) {
             case Leg.IntermediateStop i -> i.stop();
-            case Leg.Transport t -> t.depStop();
-            case Leg.Foot f -> f.depStop();
+            default -> leg.depStop();
         };
     }
 
     private static Stop getArrivalStop(Leg leg) {
         return switch (leg) {
             case Leg.IntermediateStop i -> i.stop();
-            case Leg.Transport t -> t.arrStop();
-            case Leg.Foot f -> f.arrStop();
+            default -> leg.arrStop();
         };
     }
 
     private static LocalDateTime getDepartureTime(Leg leg) {
         return switch (leg) {
             case Leg.IntermediateStop i -> i.depTime();
-            case Leg.Transport t -> t.depTime();
-            case Leg.Foot f -> f.depTime();
+            default -> leg.depTime();
         };
     }
 
     private static LocalDateTime getArrivalTime(Leg leg) {
         return switch (leg) {
             case Leg.IntermediateStop i -> i.arrTime();
-            case Leg.Transport t -> t.arrTime();
-            case Leg.Foot f -> f.arrTime();
+            default -> leg.arrTime();
         };
     }
 }

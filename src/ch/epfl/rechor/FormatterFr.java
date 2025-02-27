@@ -29,10 +29,11 @@ public final class FormatterFr {
      */
     public static String formatDuration(Duration duration) {
         long hours = duration.toHours();
-        long minutes = duration.toMinutes();
-        if (hours > 0){
+        long minutes = duration.toMinutes() - 60 * hours;
+        System.out.println(minutes);
+        if (hours > 0 ){
             return hours + " h " + minutes + " min";
-        }else {
+        } else {
             return minutes + " min";
         }
     }
@@ -45,6 +46,12 @@ public final class FormatterFr {
      */
     public static String formatTime(LocalDateTime dateTime) {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+//                .appendValue(ChronoField.DAY_OF_MONTH, 2)
+//                .appendLiteral("/")
+//                .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+//                .appendLiteral("/")
+//                .appendValue(ChronoField.YEAR, 4)
+//                .appendLiteral(" - ")
                 .appendValue(ChronoField.HOUR_OF_DAY)
                 .appendLiteral('h')
                 .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
@@ -59,10 +66,10 @@ public final class FormatterFr {
      * @return A formatted platform name, or an empty string if not applicable.
      */
     public static String formatPlatformName(Stop stop){
-        if (isStation(stop) || stop.plateformName().isEmpty()){
+        if (isStation(stop) || stop.platformName().isEmpty()){
             return "";
         }
-        return stop.plateformName().matches("^\\d.*") ? "voie " + stop.plateformName() : "quai " + stop.plateformName();
+        return stop.platformName().matches("^\\d.*") ? "voie " + stop.platformName() : "quai " + stop.platformName();
     }
 
     /**
@@ -72,7 +79,7 @@ public final class FormatterFr {
      * @return true if the stop is a station, false otherwise.
      */
     public static boolean isStation(Stop stop) {
-        return stop.plateformName() == null || stop.plateformName().isEmpty();
+        return stop.platformName() == null || stop.platformName().isEmpty();
     }
 
     /**
@@ -93,10 +100,17 @@ public final class FormatterFr {
      * @return A formatted string describing the transport leg.
      */
     public static String formatLeg(Journey.Leg.Transport leg) {
-        return formatTime(leg.depTime()) + " " + leg.depStop().name() +
-                (formatPlatformName(leg.depStop()).isEmpty() ? "" : " (" + formatPlatformName(leg.depStop()) + ")") +
-                " → " + leg.arrStop().name() + " (arr. " + formatTime(leg.arrTime()) +
-                (formatPlatformName(leg.arrStop()).isEmpty() ? "" : " " + formatPlatformName(leg.arrStop())) + ")";
+        String depTime = formatTime(leg.depTime());
+        String depStopName = leg.depStop().name();
+        String depPlatform = formatPlatformName(leg.depStop());
+        String arrTime = formatTime(leg.arrTime());
+        String arrStopName = leg.arrStop().name();
+        String arrPlatform = formatPlatformName(leg.arrStop());
+
+        return depTime + " " + depStopName +
+                (depPlatform.isEmpty() ? "" : " (" + depPlatform + ")") +
+                " → " + arrStopName + " (arr. " + arrTime +
+                (arrPlatform.isEmpty() ? "" : " " + arrPlatform) + ")";
     }
 
     /**
