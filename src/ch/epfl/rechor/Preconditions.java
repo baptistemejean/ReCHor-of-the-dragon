@@ -10,6 +10,7 @@ public final class Preconditions {
      * Private constructor to prevent instantiation.
      */
     private Preconditions() {
+        throw new UnsupportedOperationException("Preconditions is a utility class and cannot be instantiated");
     }
 
     /**

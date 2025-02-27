@@ -37,15 +37,15 @@ public record Journey(List<Leg> legs) {
                 throw new IllegalArgumentException("Walking and transport legs must alternate");
             }
 
-            LocalDateTime previousArrival = getArrivalTime(previous);
-            LocalDateTime currentDeparture = getDepartureTime(current);
+            LocalDateTime previousArrival = previous.arrTime();
+            LocalDateTime currentDeparture = current.depTime();
 
             if (currentDeparture.isBefore(previousArrival)) {
                 throw new IllegalArgumentException("A leg cannot start before the previous one ends");
             }
 
-            Stop previousArrivalStop = getArrivalStop(previous);
-            Stop currentDepartureStop = getDepartureStop(current);
+            Stop previousArrivalStop = previous.arrStop();
+            Stop currentDepartureStop = current.depStop();
 
             if (!previousArrivalStop.equals(currentDepartureStop)) {
                 throw new IllegalArgumentException("The departure stop of a leg must be the arrival stop of the previous one");
@@ -56,7 +56,7 @@ public record Journey(List<Leg> legs) {
     /**
      * Sealed interface representing a leg of a journey.
      */
-    public sealed interface Leg permits Leg.IntermediateStop, Leg.Transport, Leg.Foot {
+    public sealed interface Leg permits Leg.Transport, Leg.Foot{
         Stop depStop();
         LocalDateTime depTime();
         Stop arrStop();
@@ -77,27 +77,12 @@ public record Journey(List<Leg> legs) {
          * @param arrTime The arrival time at the stop.
          * @param depTime The departure time from the stop.
          */
-        record IntermediateStop(Stop stop, LocalDateTime arrTime, LocalDateTime depTime) implements Leg {
+        record IntermediateStop(Stop stop, LocalDateTime arrTime, LocalDateTime depTime) {
             public IntermediateStop {
                 Objects.requireNonNull(stop, "Stop cannot be null");
                 if (depTime.isBefore(arrTime)) {
                     throw new IllegalArgumentException("Departure time cannot be before arrival time");
                 }
-            }
-
-            @Override
-            public Stop depStop() {
-                return null;
-            }
-
-            @Override
-            public Stop arrStop() {
-                return null;
-            }
-
-            @Override
-            public List<IntermediateStop> intermediateStops() {
-                return List.of();
             }
         }
 
@@ -169,28 +154,28 @@ public record Journey(List<Leg> legs) {
      * Returns the departure stop of the journey.
      */
     public Stop depStop() {
-        return getDepartureStop(legs.getFirst());
+        return legs.getFirst().depStop();
     }
 
     /**
      * Returns the arrival stop of the journey.
      */
     public Stop arrStop() {
-        return getArrivalStop(legs.getLast());
+        return legs.getLast().arrStop();
     }
 
     /**
      * Returns the departure time of the journey.
      */
     public LocalDateTime depTime() {
-        return getDepartureTime(legs.getFirst());
+        return legs.getFirst().depTime();
     }
 
     /**
      * Returns the arrival time of the journey.
      */
     public LocalDateTime arrTime() {
-        return getArrivalTime(legs.getLast());
+        return legs.getLast().arrTime();
     }
 
     /**
@@ -198,37 +183,5 @@ public record Journey(List<Leg> legs) {
      */
     public Duration duration() {
         return Duration.between(depTime(), arrTime());
-    }
-
-    private static Stop getDepartureStop(Leg leg) {
-        return switch (leg) {
-            case Leg.IntermediateStop i -> i.stop();
-            case Leg.Transport t -> t.depStop();
-            case Leg.Foot f -> f.depStop();
-        };
-    }
-
-    private static Stop getArrivalStop(Leg leg) {
-        return switch (leg) {
-            case Leg.IntermediateStop i -> i.stop();
-            case Leg.Transport t -> t.arrStop();
-            case Leg.Foot f -> f.arrStop();
-        };
-    }
-
-    private static LocalDateTime getDepartureTime(Leg leg) {
-        return switch (leg) {
-            case Leg.IntermediateStop i -> i.depTime();
-            case Leg.Transport t -> t.depTime();
-            case Leg.Foot f -> f.depTime();
-        };
-    }
-
-    private static LocalDateTime getArrivalTime(Leg leg) {
-        return switch (leg) {
-            case Leg.IntermediateStop i -> i.arrTime();
-            case Leg.Transport t -> t.arrTime();
-            case Leg.Foot f -> f.arrTime();
-        };
     }
 }
