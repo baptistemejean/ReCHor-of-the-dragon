@@ -33,7 +33,7 @@ public final class PackedRange {
             throw new IllegalArgumentException("Interval length must be between 0 and 255");
         }
 
-        return (startInclusive << 8) | (length & 0xFF);
+        return Bits32_24_8.pack(startInclusive, length);
     }
 
     /**
@@ -43,7 +43,7 @@ public final class PackedRange {
      * @return The length of the interval.
      */
     public static int length(int interval) {
-        return interval & 0xFF;
+        return Bits32_24_8.unpack8(interval);
     }
 
     /**
@@ -53,7 +53,7 @@ public final class PackedRange {
      * @return The inclusive start of the interval.
      */
     public static int startInclusive(int interval) {
-        return interval >> 8;
+        return Bits32_24_8.unpack24(interval);
     }
 
     /**

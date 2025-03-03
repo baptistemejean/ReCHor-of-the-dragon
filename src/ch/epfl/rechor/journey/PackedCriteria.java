@@ -23,16 +23,17 @@ public final class PackedCriteria {
     private static final int CHANGES_BITS = 7;
     private static final int PAYLOAD_BITS = 32;
 
-    // Bit masks
-    private static final long TIME_MASK = (1L << TIME_BITS) - 1;
-    private static final long CHANGES_MASK = (1L << CHANGES_BITS) - 1;
-    private static final long PAYLOAD_MASK = (1L << PAYLOAD_BITS) - 1;
-
     // Bit shifts for each field
-    private static final int ARRIVAL_SHIFT = TIME_BITS;
-    private static final int CHANGES_SHIFT = TIME_BITS + TIME_BITS;
+    private static final int ARRIVAL_SHIFT = CHANGES_BITS + PAYLOAD_BITS;
+    private static final int CHANGES_SHIFT = PAYLOAD_BITS;
     private static final int PAYLOAD_SHIFT = TIME_BITS + TIME_BITS + CHANGES_BITS;
-    private static final long DEPARTURE_FLAG = 1L << 63; // Sign bit indicates the presence of departure time
+    private static final long DEPARTURE_SHIFT = TIME_BITS + CHANGES_BITS + PAYLOAD_BITS;
+
+    // Bit masks
+    private static final long TIME_MASK = 0b111111111111;
+    private static final long CHANGES_MASK = 0b1111111;
+    private static final long PAYLOAD_MASK = 0xFFFFFFFFL;
+
 
     // Special value representing no departure time
     private static final int NO_DEPARTURE_TIME = 0;
@@ -51,18 +52,18 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the arrival time is out of range or changes exceed 7 bits.
      */
     public static long pack(int arrMins, int changes, int payload) {
-        if (arrMins < TIME_ORIGIN || arrMins > MAX_TIME) {
+        if (arrMins < 0 || arrMins > MAX_TIME) {
             throw new IllegalArgumentException("Invalid arrival minutes: " + arrMins);
         }
-        if (changes > CHANGES_MASK) {
+        if (changes >>> CHANGES_BITS != 0) {
             throw new IllegalArgumentException("Too many changes: " + changes);
         }
 
-        int translatedArrMins = arrMins - TIME_ORIGIN;
+//        int translatedArrMins = arrMins - TIME_ORIGIN;
 
-        return (((long) translatedArrMins & TIME_MASK) << ARRIVAL_SHIFT) |
-                (((long) changes & CHANGES_MASK) << CHANGES_SHIFT) |
-                (Integer.toUnsignedLong(payload) << PAYLOAD_SHIFT);
+        return (((long) arrMins) << ARRIVAL_SHIFT) |
+                (((long) changes) << CHANGES_SHIFT) |
+                (Integer.toUnsignedLong(payload));
     }
 
     /**
@@ -72,7 +73,7 @@ public final class PackedCriteria {
      * @return True if a departure time is included, false otherwise.
      */
     public static boolean hasDepMins(long criteria) {
-        return (criteria & DEPARTURE_FLAG) != 0;
+        return (criteria >>> DEPARTURE_SHIFT) != 0;
     }
 
     /**
@@ -86,7 +87,7 @@ public final class PackedCriteria {
         if (!hasDepMins(criteria)) {
             throw new IllegalArgumentException("Criteria does not contain departure minutes.");
         }
-        return MAX_TIME - (int) ((criteria >>> CHANGES_SHIFT) & TIME_MASK);
+        return (int) (criteria >>> DEPARTURE_SHIFT);
     }
 
     /**
@@ -96,7 +97,7 @@ public final class PackedCriteria {
      * @return The arrival time in minutes after midnight.
      */
     public static int arrMins(long criteria) {
-        return (int) ((criteria >>> ARRIVAL_SHIFT) & TIME_MASK) + TIME_ORIGIN;
+        return (int) ((int) (criteria >>> ARRIVAL_SHIFT) & TIME_MASK);
     }
 
     /**
@@ -106,7 +107,7 @@ public final class PackedCriteria {
      * @return The number of changes.
      */
     public static int changes(long criteria) {
-        return (int) ((criteria >>> CHANGES_SHIFT) & CHANGES_MASK);
+        return (int) ((int) (criteria >>> PAYLOAD_BITS) & CHANGES_MASK);
     }
 
     /**
@@ -116,7 +117,7 @@ public final class PackedCriteria {
      * @return The payload value.
      */
     public static int payload(long criteria) {
-        return (int) ((criteria >>> PAYLOAD_SHIFT) & PAYLOAD_MASK);
+        return (int) ((criteria) & PAYLOAD_MASK);
     }
 
     /**
@@ -143,7 +144,7 @@ public final class PackedCriteria {
      * @return The criteria without departure minutes.
      */
     public static long withoutDepMins(long criteria) {
-        return criteria & ~(TIME_MASK << CHANGES_SHIFT);
+        return criteria & ~(TIME_MASK << DEPARTURE_SHIFT);
     }
 
     /**
@@ -155,14 +156,11 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the departure time is out of range.
      */
     public static long withDepMins(long criteria, int depMins) {
-        if (depMins < TIME_ORIGIN || depMins > MAX_TIME) {
+        if (depMins < 0 || depMins > MAX_TIME) {
             throw new IllegalArgumentException("Invalid departure minutes: " + depMins);
         }
 
-        long depTimeBits = (MAX_TIME - depMins) & TIME_MASK;
-
-        return (criteria & ~(TIME_MASK << CHANGES_SHIFT)) |
-                (depTimeBits << CHANGES_SHIFT) | DEPARTURE_FLAG;
+       return criteria | (((long) depMins) << DEPARTURE_SHIFT);
     }
 
     /**
@@ -172,6 +170,9 @@ public final class PackedCriteria {
      * @return The updated packed criteria with one more change.
      */
     public static long withAdditionalChange(long criteria) {
+        if (changes(criteria) == CHANGES_MASK) {
+            throw new IllegalArgumentException("Cannot add a new change");
+        }
         return criteria + (1L << CHANGES_SHIFT);
     }
 
@@ -183,7 +184,7 @@ public final class PackedCriteria {
      * @return The updated packed criteria with the new payload.
      */
     public static long withPayload(long criteria, int payload1) {
-        return (criteria & ~(PAYLOAD_MASK << PAYLOAD_SHIFT)) |
-                (Integer.toUnsignedLong(payload1) << PAYLOAD_SHIFT);
+        return (criteria & ~(PAYLOAD_MASK)) |
+                (Integer.toUnsignedLong(payload1));
     }
 }
