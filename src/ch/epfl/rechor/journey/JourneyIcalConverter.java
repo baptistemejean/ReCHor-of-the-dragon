@@ -18,7 +18,7 @@ public final class JourneyIcalConverter {
     }
 
     public static String toIcalendar(Journey journey) {
-        StringJoiner j = new StringJoiner(" - ");
+        StringJoiner j = new StringJoiner("\\n");
         for (Journey.Leg leg: journey.legs()) {
             switch (leg) {
                 case Journey.Leg.Foot f -> j.add(FormatterFr.formatLeg(f));

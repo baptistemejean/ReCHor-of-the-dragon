@@ -13,6 +13,8 @@ class PackedCriteriaTest {
     void packedCriteriaPackWorksOnGivenExample() {
         var p = PackedCriteria.pack(9 * 60, 2, 0b1010_0101_1010_0101_1010_0101_1010_0101);
         assertEquals(0b0_000000000000_001100001100_0000010_1010_0101_1010_0101_1010_0101_1010_0101L, p);
+        // 0 - 0000 0000 0000 - 0010 0001 1100 - 0000 010 - 1010 0101 1010 0101 1010 0101 1010 0101
+        // 0011 0000 1100
     }
 
     @Test

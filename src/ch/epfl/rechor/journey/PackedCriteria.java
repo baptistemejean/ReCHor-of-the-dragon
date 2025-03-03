@@ -40,7 +40,7 @@ public final class PackedCriteria {
 
     // Time representation constants
     private static final int TIME_ORIGIN = -240;
-    private static final int MAX_TIME = 4095;
+    private static final int MAX_TIME = 3119;
 
     /**
      * Packs optimization criteria into a 64-bit long (without departure time).
@@ -52,7 +52,7 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the arrival time is out of range or changes exceed 7 bits.
      */
     public static long pack(int arrMins, int changes, int payload) {
-        if (arrMins < 0 || arrMins > MAX_TIME) {
+        if (arrMins < TIME_ORIGIN || arrMins > MAX_TIME + TIME_ORIGIN) {
             throw new IllegalArgumentException("Invalid arrival minutes: " + arrMins);
         }
         if (changes >>> CHANGES_BITS != 0) {
@@ -61,7 +61,7 @@ public final class PackedCriteria {
 
 //        int translatedArrMins = arrMins - TIME_ORIGIN;
 
-        return (((long) arrMins) << ARRIVAL_SHIFT) |
+        return (((long) arrMins - TIME_ORIGIN) << ARRIVAL_SHIFT) |
                 (((long) changes) << CHANGES_SHIFT) |
                 (Integer.toUnsignedLong(payload));
     }
@@ -73,6 +73,7 @@ public final class PackedCriteria {
      * @return True if a departure time is included, false otherwise.
      */
     public static boolean hasDepMins(long criteria) {
+//        long temp = criteria >>> DEPARTURE_SHIFT;
         return (criteria >>> DEPARTURE_SHIFT) != 0;
     }
 
@@ -84,10 +85,14 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If no departure time is included.
      */
     public static int depMins(long criteria) {
+        /*
+         TODO: when dep mins is 240 the saved value is 0, and this method throws thinking the packed long doesn't have dep mins packed into it
+         POSSIBLE FIX: check if the packed value needs to be Time Origin dependent
+        */
         if (!hasDepMins(criteria)) {
             throw new IllegalArgumentException("Criteria does not contain departure minutes.");
         }
-        return (int) (criteria >>> DEPARTURE_SHIFT);
+        return (int) (criteria >>> DEPARTURE_SHIFT) + TIME_ORIGIN;
     }
 
     /**
@@ -97,7 +102,7 @@ public final class PackedCriteria {
      * @return The arrival time in minutes after midnight.
      */
     public static int arrMins(long criteria) {
-        return (int) ((int) (criteria >>> ARRIVAL_SHIFT) & TIME_MASK);
+        return (int) ((int) (criteria >>> ARRIVAL_SHIFT) & TIME_MASK) + TIME_ORIGIN;
     }
 
     /**
@@ -129,12 +134,18 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If one has a departure time and the other does not.
      */
     public static boolean dominatesOrIsEqual(long criteria1, long criteria2) {
-        if (hasDepMins(criteria1) != hasDepMins(criteria2)) {
+
+        if (hasDepMins(criteria1) && hasDepMins(criteria2)) {
+            return arrMins(criteria1) <= arrMins(criteria2) &&
+                    depMins(criteria1) >= depMins(criteria2) &&
+                    changes(criteria1) <= changes(criteria2);
+        } else if (!hasDepMins(criteria1) && !hasDepMins(criteria2)) {
+            return arrMins(criteria1) <= arrMins(criteria2) &&
+                    changes(criteria1) <= changes(criteria2);
+
+        } else {
             throw new IllegalArgumentException("Inconsistent departure time presence.");
         }
-        return arrMins(criteria1) <= arrMins(criteria2) &&
-                changes(criteria1) <= changes(criteria2) &&
-                payload(criteria1) <= payload(criteria2);
     }
 
     /**
@@ -156,11 +167,11 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the departure time is out of range.
      */
     public static long withDepMins(long criteria, int depMins) {
-        if (depMins < 0 || depMins > MAX_TIME) {
+        if (depMins < TIME_ORIGIN || depMins > MAX_TIME - TIME_ORIGIN) {
             throw new IllegalArgumentException("Invalid departure minutes: " + depMins);
         }
 
-       return criteria | (((long) depMins) << DEPARTURE_SHIFT);
+       return criteria | (((long) depMins - TIME_ORIGIN) << DEPARTURE_SHIFT);
     }
 
     /**
