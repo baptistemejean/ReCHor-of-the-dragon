@@ -1,10 +1,9 @@
-package ch.epfl.rechor;
+package ch.epfl.rechor.journey;
 
-import ch.epfl.rechor.journey.PackedCriteria;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class PackedCriteriaTest {
+public class MyPackedCriteriaTest {
     private int exampleDepMins () {
         return 480; // 4h00 // 0001 1110 0000
     }

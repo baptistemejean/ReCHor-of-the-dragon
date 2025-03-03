@@ -1,80 +1,119 @@
 package ch.epfl.rechor;
 
-import ch.epfl.rechor.journey.Journey;
-import ch.epfl.rechor.journey.JourneyIcalConverter;
-import ch.epfl.rechor.journey.Stop;
-import ch.epfl.rechor.journey.Vehicle;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.List;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IcalBuilderTest {
-    private static Journey exampleJourney() {
-        var s1 = new Stop("Ecublens VD, EPFL", null, 6.566141, 46.522196);
-        var s2 = new Stop("Renens VD, gare", null, 6.578519, 46.537619);
-        var s3 = new Stop("Renens VD", "4", 6.578935, 46.537042);
-        var s4 = new Stop("Lausanne", "5", 6.629092, 46.516792);
-        var s5 = new Stop("Lausanne", "1", 6.629092, 46.516792);
-        var s6 = new Stop("Romont FR", "2", 6.911811, 46.693508);
+class IcalBuilderTest {
+    private static final String VCALENDAR = "VCALENDAR";
+    private static final String VEVENT = "VEVENT";
+    private static final String VERSION = "2.0";
+    private static final String UID = "B0856A33-2593-4518-A057-3A295F0601F2";
+    private static final String DTSTAMP = "20250221T180123";
+    private static final String PRODID = "MyProduct";
+    private static final String CRLF = "\r\n";
 
-        var d = LocalDate.of(2025, Month.FEBRUARY, 18);
-        var l1 = new Journey.Leg.Transport(
-                s1,
-                d.atTime(16, 13),
-                s2,
-                d.atTime(16, 19),
-                List.of(),
-                Vehicle.METRO,
-                "m1",
-                "Renens VD, gare");
+    private static String field(String fieldName, String value) {
+        return fieldName + ":" + value + CRLF;
+    }
 
-        var l2 = new Journey.Leg.Foot(s2, d.atTime(16, 19), s3, d.atTime(16, 22));
-
-        var l3 = new Journey.Leg.Transport(
-                s3,
-                d.atTime(16, 26),
-                s4,
-                d.atTime(16, 33),
-                List.of(),
-                Vehicle.TRAIN,
-                "R4",
-                "Bex");
-
-        var l4 = new Journey.Leg.Foot(s4, d.atTime(16, 33), s5, d.atTime(16, 38));
-
-        var l5 = new Journey.Leg.Transport(
-                s5,
-                d.atTime(16, 40),
-                s6,
-                d.atTime(17, 13),
-                List.of(),
-                Vehicle.TRAIN,
-                "IR15",
-                "Luzern");
-
-        return new Journey(List.of(l1, l2, l3, l4, l5));
+    private static String lines(String... fields) {
+        return String.join("", fields);
     }
 
     @Test
-    void testIcalBuilder () {
-        IcalBuilder builder = new IcalBuilder().add(IcalBuilder.Name.SUMMARY,
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Vestibulumcursusfringilla mattis. Maecenas efficitur vehicula accumsan. In justo libero, maximus ut interdum quis, maximus sed orci. Maecenas porttitor consectetur enim eget posuere. In vestibulum aliquet metus eu efficitur. Mauris rutrum diam nec odio cursus, ac porttitor massa finibus.")
-                .begin(IcalBuilder.Component.VEVENT)
+    void icalBuilderBuildWorksForEmptyBuilder() {
+        var icalString = new IcalBuilder().build();
+        assertEquals("", icalString.trim());
+    }
+
+    @Test
+    void icalBuilderAddWorksForSingleField() {
+        var actual = new IcalBuilder()
+                .add(IcalBuilder.Name.VERSION, VERSION)
+                .build();
+        var expected = field("VERSION", VERSION);
+        assertEquals(expected.trim(), actual.trim());
+    }
+
+    @Test
+    void icalBuilderAddWorksForSeveralFields() {
+        var expected = lines(
+                field("VERSION", VERSION),
+                field("UID", UID),
+                field("DTSTAMP", DTSTAMP));
+        var actual = new IcalBuilder()
+                .add(IcalBuilder.Name.VERSION, VERSION)
+                .add(IcalBuilder.Name.UID, UID)
+                .add(IcalBuilder.Name.DTSTAMP, DTSTAMP)
+                .build();
+
+        assertEquals(expected.trim(), actual.trim());
+    }
+
+    @Test
+    void icalBuilderAddCorrectlyFormatsDates() {
+        var timeStamp = LocalDateTime.of(2025, Month.FEBRUARY, 21, 18, 1, 23);
+        var expected = lines(field("DTSTAMP", DTSTAMP));
+        var actual = new IcalBuilder()
+                .add(IcalBuilder.Name.DTSTAMP, timeStamp)
+                .build();
+        assertEquals(expected.trim(), actual.trim());
+    }
+
+    @Test
+    void icalBuilderAddCorrectlyFoldsLines() {
+        var description = String.join(" ",
+                Collections.nCopies(10, "A very long description that should be folded."));
+
+        var expected = lines(field("DESCRIPTION", description));
+        var actual = new IcalBuilder()
+                .add(IcalBuilder.Name.DESCRIPTION, description)
+                .build();
+
+        for (var line : actual.split(CRLF))
+            assertTrue(line.length() <= 75);
+
+        var unfoldedActual = actual.replaceAll(CRLF + " ", "");
+        assertEquals(expected.trim(), unfoldedActual.trim());
+    }
+
+    @Test
+    void icalBuilderBuildThrowsWithUnclosedComponent() {
+        assertThrows(RuntimeException.class, () -> {
+            new IcalBuilder()
+                    .begin(IcalBuilder.Component.VCALENDAR)
+                    .build();
+        });
+    }
+
+    @Test
+    void icalBuilderEndCorrectlyClosesComponents() {
+        var expected = lines(
+                field("BEGIN", VCALENDAR),
+                field("PRODID", PRODID),
+                field("VERSION", VERSION),
+                field("BEGIN", VEVENT),
+                field("UID", UID),
+                field("DTSTAMP", DTSTAMP),
+                field("END", VEVENT),
+                field("END", VCALENDAR));
+
+        var actual = new IcalBuilder()
                 .begin(IcalBuilder.Component.VCALENDAR)
-                .add(IcalBuilder.Name.DTSTART, LocalDate.of(2025, Month.FEBRUARY, 22).atTime(12, 34))
+                .add(IcalBuilder.Name.PRODID, PRODID)
+                .add(IcalBuilder.Name.VERSION, VERSION)
+                .begin(IcalBuilder.Component.VEVENT)
+                .add(IcalBuilder.Name.UID, UID)
+                .add(IcalBuilder.Name.DTSTAMP, DTSTAMP)
                 .end()
-                .end();
+                .end()
+                .build();
 
-        System.out.println(builder.build());
-    }
-
-    @Test
-    void testJourneyIcalConverter () {
-        System.out.println(JourneyIcalConverter.toIcalendar(exampleJourney()));
+        assertEquals(expected.trim(), actual.trim());
     }
 }

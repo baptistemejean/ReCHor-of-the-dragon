@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JourneyTest {
+class MyJourneyTest {
     private static List<Journey.Leg> exampleLegs() {
         var s1 = new Stop("Ecublens VD, EPFL", null, 6.566141, 46.522196);
         var s2 = new Stop("Renens VD, gare", null, 6.578519, 46.537619);

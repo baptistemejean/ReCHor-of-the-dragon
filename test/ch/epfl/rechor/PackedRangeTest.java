@@ -2,74 +2,50 @@ package ch.epfl.rechor;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class PackedRangeTest {
-    private int startIntervalExample() {
-        return 339970; // 0000 0101 0011 0000 0000 0010
-    }
+class PackedRangeTest {
+    @Test
+    void packedRangePackThrowsWithIllegalStartOrEnd() {
+        for (var startInclusive : new int[]{-1, (1 << 24)}) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                PackedRange.pack(startInclusive, startInclusive + 1);
+            });
+        }
 
-    private int endIntervalExample() {
-        return 340000; // 0000 0101 0011 0000 0010 0000
-    }
-
-    private int startIntervalErrorExample() {
-        return 8388608; // 1000 0000 0000 0000 0000 0000 // 2^23
-    }
-
-    private int endIntervalErrorExample() {
-        return startIntervalExample() - 2; // 0000 0101 0011 0000 0000 0000
-    }
-
-    private int lengthExample() {
-        return 30; // 0001 1110
+        for (var length : new int[]{-1, (1 << 8)}) {
+            var startInclusive = 1000;
+            assertThrows(IllegalArgumentException.class, () -> {
+                PackedRange.pack(startInclusive, startInclusive + length);
+            });
+        }
     }
 
     @Test
-    void packWorksWithNormal() {
-        int packed = PackedRange.pack(startIntervalExample(), endIntervalExample());
-        assertEquals(87032350, packed); // 0000 0101 0011 0000 0000 0010 0001 1110
+    void packedRangeStartInclusiveWorks() {
+        var length = 1;
+        for (var startInclusive = 0; startInclusive < (1 << 24); startInclusive += 1) {
+            var p = PackedRange.pack(startInclusive, startInclusive + length);
+            assertEquals(startInclusive, PackedRange.startInclusive(p));
+        }
     }
 
     @Test
-    void packWorksWithZeros() {
-        int packed = PackedRange.pack(startIntervalExample(), startIntervalExample());
-        assertEquals(87032320, packed); // 0000 0101 0011 0000 0000 0010 0000 0000
+    void packedRangeLengthWorks() {
+        var startInclusive = 1000;
+        for (var length = 0; length < (1 << 8); length += 1) {
+            var p = PackedRange.pack(startInclusive, startInclusive + length);
+            assertEquals(length, PackedRange.length(p));
+        }
     }
 
     @Test
-    void unpackLengthWorks() {
-        int packed = PackedRange.pack(startIntervalExample(), endIntervalExample());
-        int length = PackedRange.length(packed);
-        assertEquals(lengthExample(), length);
-    }
-
-    @Test
-    void unpackStartWorks() {
-        int packed = PackedRange.pack(startIntervalExample(), endIntervalExample());
-        int start = PackedRange.startInclusive(packed);
-        assertEquals(startIntervalExample(), start);
-    }
-
-    @Test
-    void unpackEndWorks() {
-        int packed = PackedRange.pack(startIntervalExample(), endIntervalExample());
-        int end = PackedRange.endExclusive(packed);
-        assertEquals(endIntervalExample(), end);
-    }
-
-    @Test
-    void packThrowsWhenStartOutOfRange() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            int packed = PackedRange.pack(startIntervalErrorExample() << 1, startIntervalErrorExample() << 1 + 1);
-        });
-    }
-
-    @Test
-    void packThrowsWhenLengthOutOfRange() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            int packed = PackedRange.pack(startIntervalExample(), startIntervalErrorExample());
-        });
+    void packedRangeEndExclusiveWorks() {
+        var startInclusive = (1 << 24) - 1;
+        for (var length = 0; length < (1 << 8); length += 1) {
+            var endExclusive = startInclusive + length;
+            var p = PackedRange.pack(startInclusive, endExclusive);
+            assertEquals(endExclusive, PackedRange.endExclusive(p));
+        }
     }
 }

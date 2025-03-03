@@ -1,12 +1,11 @@
 package ch.epfl.rechor;
 
-import ch.epfl.rechor.journey.Stop;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class BitsTest {
+public class MyBitsTest {
     private int example24() {
         return 5174302; // 0100 1110 1111 0100 0001 1110
     }
