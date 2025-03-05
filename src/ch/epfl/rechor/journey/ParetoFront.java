@@ -8,12 +8,12 @@ public class ParetoFront {
     // Static empty ParetoFront instance
     public static final ParetoFront EMPTY = new ParetoFront(new long[0]);
 
-    // Private array to store packed tuples
-    private final long[] packedTuples;
+    // Private array to store packed criteria
+    private final long[] packedCriteria;
 
     // Private constructor that takes packed tuples
     private ParetoFront(long[] tuples) {
-        this.packedTuples = tuples;
+        this.packedCriteria = tuples;
     }
 
     /**
@@ -21,7 +21,7 @@ public class ParetoFront {
      * @return number of tuples in the frontier
      */
     public int size() {
-        return packedTuples.length;
+        return packedCriteria.length;
     }
 
     /**
@@ -32,15 +32,16 @@ public class ParetoFront {
      * @throws NoSuchElementException if no matching tuple exists
      */
     public long get(int arrMins, int changes) {
-        for (long packedTuple : packedTuples) {
+        for (long packed : packedCriteria) {
             // Unpack and check if matches the given criteria
-            int tupleArrMins = (int)((packedTuple >> 32) & 0xFFFFFFFFL);
-            int tupleChanges = (int)(packedTuple & 0xFFFFFFFFL);
+            int tupleArrMins = PackedCriteria.arrMins(packed);
+            int tupleChanges = PackedCriteria.changes(packed);
 
             if (tupleArrMins == arrMins && tupleChanges == changes) {
-                return packedTuple;
+                return packed;
             }
         }
+
         throw new NoSuchElementException("No tuple found with arrival time " + arrMins + " and changes " + changes);
     }
 
@@ -49,7 +50,7 @@ public class ParetoFront {
      * @param action consumer to apply to each packed tuple
      */
     public void forEach(LongConsumer action) {
-        for (long packedTuple : packedTuples) {
+        for (long packedTuple : packedCriteria) {
             action.accept(packedTuple);
         }
     }
@@ -61,9 +62,9 @@ public class ParetoFront {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("ParetoFront[\n");
-        for (long packedTuple : packedTuples) {
-            int arrMins = (int)((packedTuple >> 32) & 0xFFFFFFFFL);
-            int changes = (int)(packedTuple & 0xFFFFFFFFL);
+        for (long packed : packedCriteria) {
+            int arrMins = PackedCriteria.arrMins(packed);
+            int changes = PackedCriteria.changes(packed);
             sb.append(String.format("  {arrMins: %d, changes: %d}\n", arrMins, changes));
         }
         sb.append("]");
@@ -78,11 +79,13 @@ public class ParetoFront {
         private long[] tuples;
         private int size;
 
+        private final static int DEFAULT_CAPACITY = 2;
+
         /**
          * Default constructor creating an empty builder
          */
         public Builder() {
-            this.tuples = new long[4]; // Initial capacity
+            this.tuples = new long[DEFAULT_CAPACITY];
             this.size = 0;
         }
 
@@ -108,7 +111,8 @@ public class ParetoFront {
          * @return this builder
          */
         public Builder clear() {
-            size = 0;
+            this.tuples = new long[DEFAULT_CAPACITY];
+            this.size = 0;
             return this;
         }
 
@@ -121,11 +125,11 @@ public class ParetoFront {
             // Ensure dominance and remove dominated tuples
             boolean shouldAdd = true;
             for (int i = 0; i < size; i++) {
-                if (dominates(tuples[i], packedTuple)) {
+                if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
                     shouldAdd = false;
                     break;
                 }
-                if (dominates(packedTuple, tuples[i])) {
+                if (PackedCriteria.dominatesOrIsEqual(packedTuple, tuples[i])) {
                     // Remove the dominated tuple
                     System.arraycopy(tuples, i + 1, tuples, i, size - i - 1);
                     size--;
@@ -208,23 +212,6 @@ public class ParetoFront {
         public ParetoFront build() {
             // Create a copy to ensure immutability
             return new ParetoFront(Arrays.copyOf(tuples, size));
-        }
-
-        /**
-         * Checks if one packed tuple dominates another
-         * @param tuple1 first tuple
-         * @param tuple2 second tuple
-         * @return true if tuple1 dominates tuple2, false otherwise
-         */
-        private boolean dominates(long tuple1, long tuple2) {
-            int arrMins1 = (int)((tuple1 >> 32) & 0xFFFFFFFFL);
-            int changes1 = (int)(tuple1 & 0xFFFFFFFFL);
-
-            int arrMins2 = (int)((tuple2 >> 32) & 0xFFFFFFFFL);
-            int changes2 = (int)(tuple2 & 0xFFFFFFFFL);
-
-            return (arrMins1 <= arrMins2 && changes1 <= changes2) &&
-                    (arrMins1 < arrMins2 || changes1 < changes2);
         }
     }
 }
