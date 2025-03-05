@@ -10,6 +10,12 @@ package ch.epfl.rechor;
  * <p>This class is final and cannot be instantiated.</p>
  */
 public final class PackedRange {
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private PackedRange() {
+        throw new UnsupportedOperationException("PackedRange is a utility class and cannot be instantiated");
+    }
 
     /**
      * Packs an integer interval into a 32-bit integer.
@@ -25,13 +31,10 @@ public final class PackedRange {
      *                                  if the interval length is not in the range [0, 255].
      */
     public static int pack(int startInclusive, int endExclusive) {
+        Preconditions.checkArgument((startInclusive >> 24) == 0);
+
         int length = endExclusive - startInclusive;
-        if ((startInclusive >> 24) != 0) {
-            throw new IllegalArgumentException("startInclusive exceeds 24 bits");
-        }
-        if ((length < 0) || (length > 255)) {
-            throw new IllegalArgumentException("Interval length must be between 0 and 255");
-        }
+        Preconditions.checkArgument((length >= 0) && (length <= 255));
 
         return Bits32_24_8.pack(startInclusive, length);
     }

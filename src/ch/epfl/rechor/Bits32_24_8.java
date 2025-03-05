@@ -13,6 +13,13 @@ package ch.epfl.rechor;
 public final class Bits32_24_8 {
 
     /**
+     * Private constructor to prevent instantiation.
+     */
+    private Bits32_24_8() {
+        throw new UnsupportedOperationException("Bits32_24_8 is a utility class and cannot be instantiated");
+    }
+
+    /**
      * Packs a 24-bit value and an 8-bit value into a single 32-bit integer.
      *
      * @param bits24 The 24-bit value to be stored in the most significant 24 bits.
@@ -21,12 +28,8 @@ public final class Bits32_24_8 {
      * @throws IllegalArgumentException If the 24-bit value exceeds 24 bits or the 8-bit value exceeds 8 bits.
      */
     public static int pack(int bits24, int bits8) {
-        if ((bits24 >> 24) != 0) {
-            throw new IllegalArgumentException("bits24 exceeds 24 bits");
-        }
-        if ((bits8 >> 8) != 0) {
-            throw new IllegalArgumentException("bits8 exceeds 8 bits");
-        }
+       Preconditions.checkArgument((bits24 >> 24) == 0);
+       Preconditions.checkArgument((bits8 >> 8) == 0);
         return (bits24 << 8) | (bits8 & 0xFF);
     }
 
