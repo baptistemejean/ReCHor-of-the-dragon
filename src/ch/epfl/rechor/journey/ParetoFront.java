@@ -183,7 +183,7 @@ public class ParetoFront {
             for (int i = 0; i < that.size; i++) {
                 boolean dominated = false;
                 for (int j = 0; j < this.size; j++) {
-                    if (dominates(this.tuples[j], that.tuples[i])) {
+                    if (PackedCriteria.dominatesOrIsEqual(this.tuples[j], that.tuples[i])) {
                         dominated = true;
                         break;
                     }
