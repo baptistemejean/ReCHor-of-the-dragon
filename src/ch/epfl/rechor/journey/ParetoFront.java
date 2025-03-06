@@ -12,7 +12,7 @@ public class ParetoFront {
     private final long[] packedCriteria;
 
     // Private constructor that takes packed tuples
-    private ParetoFront(long[] tuples) {
+    ParetoFront(long[] tuples) {
         this.packedCriteria = tuples;
     }
 
@@ -45,6 +45,10 @@ public class ParetoFront {
         throw new NoSuchElementException("No tuple found with arrival time " + arrMins + " and changes " + changes);
     }
 
+    public boolean equals(ParetoFront obj) {
+        return Arrays.equals(obj.packedCriteria, this.packedCriteria);
+    }
+
     /**
      * Applies the given action to each tuple in the frontier
      * @param action consumer to apply to each packed tuple
@@ -67,6 +71,7 @@ public class ParetoFront {
             int changes = PackedCriteria.changes(packed);
             sb.append(String.format("  {arrMins: %d, changes: %d}\n", arrMins, changes));
         }
+        sb.append(String.format("  {size: %d}\n", size()));
         sb.append("]");
         return sb.toString();
     }
@@ -79,7 +84,7 @@ public class ParetoFront {
         private long[] tuples;
         private int size;
 
-        private final static int DEFAULT_CAPACITY = 10;
+        private final static int DEFAULT_CAPACITY = 3;
 
         /**
          * Default constructor creating an empty builder
@@ -126,9 +131,10 @@ public class ParetoFront {
             boolean shouldAdd = true;
             int destPos = 0;
             for (int i = 0; i < size; i++) {
-                if (packedTuple < tuples[i]) {
+                if (packedTuple > tuples[i]) {
                     if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
                         shouldAdd = false;
+//                        System.out.println("false");
                         break;
                     }
                     destPos = i + 1;
@@ -144,10 +150,12 @@ public class ParetoFront {
 
             if (shouldAdd) {
                 // Resize if needed
-                if (size == tuples.length) {
-                    tuples = Arrays.copyOf(tuples, tuples.length * 2);
-                }
-                System.arraycopy(tuples, destPos, tuples, destPos + 1, size - destPos - 1);
+                 if (size == tuples.length) {
+                     tuples = Arrays.copyOf(tuples, tuples.length + 1);
+                 } else if (size != 0) {
+                     System.arraycopy(tuples, destPos, tuples, destPos + 1, tuples.length - destPos - 1);
+                 }
+
                 tuples[destPos] = packedTuple;
                 size++;
             }
@@ -159,12 +167,12 @@ public class ParetoFront {
          * Adds a tuple with arrival time, changes, and payload
          * @param arrMins arrival time in minutes
          * @param changes number of changes
-         * @param payload additional payload (unused in this implementation)
+         * @param payload additional payload
          * @return this builder
          */
         public Builder add(int arrMins, int changes, int payload) {
             // Pack arrival time and changes into a single long
-            long packedTuple = ((long)arrMins << 32) | (changes & 0xFFFFFFFFL);
+            long packedTuple = PackedCriteria.pack(arrMins, changes, payload);
             return add(packedTuple);
         }
 
@@ -190,7 +198,7 @@ public class ParetoFront {
             for (int i = 0; i < that.size; i++) {
                 boolean dominated = false;
                 for (int j = 0; j < this.size; j++) {
-                    if (PackedCriteria.dominatesOrIsEqual(this.tuples[j], that.tuples[i])) {
+                    if (PackedCriteria.dominatesOrIsEqual(PackedCriteria.withDepMins(this.tuples[j], depMins), PackedCriteria.withDepMins(that.tuples[i], depMins))) {
                         dominated = true;
                         break;
                     }
@@ -219,6 +227,15 @@ public class ParetoFront {
         public ParetoFront build() {
             // Create a copy to ensure immutability
             return new ParetoFront(Arrays.copyOf(tuples, size));
+        }
+
+        public boolean equals(Builder obj) {
+            return Arrays.equals(obj.tuples, this.tuples) && obj.size == this.size;
+        }
+
+        @Override
+        public String toString() {
+            return this.build().toString();
         }
     }
 }
