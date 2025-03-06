@@ -79,7 +79,7 @@ public class ParetoFront {
         private long[] tuples;
         private int size;
 
-        private final static int DEFAULT_CAPACITY = 2;
+        private final static int DEFAULT_CAPACITY = 10;
 
         /**
          * Default constructor creating an empty builder
@@ -124,16 +124,21 @@ public class ParetoFront {
         public Builder add(long packedTuple) {
             // Ensure dominance and remove dominated tuples
             boolean shouldAdd = true;
+            int destPos = 0;
             for (int i = 0; i < size; i++) {
-                if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
-                    shouldAdd = false;
-                    break;
-                }
-                if (PackedCriteria.dominatesOrIsEqual(packedTuple, tuples[i])) {
-                    // Remove the dominated tuple
-                    System.arraycopy(tuples, i + 1, tuples, i, size - i - 1);
-                    size--;
-                    i--;
+                if (packedTuple < tuples[i]) {
+                    if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
+                        shouldAdd = false;
+                        break;
+                    }
+                    destPos = i + 1;
+                } else {
+                    if (PackedCriteria.dominatesOrIsEqual(packedTuple, tuples[i])) {
+                        // Remove the dominated tuple
+                        System.arraycopy(tuples, i + 1, tuples, i, size - i - 1);
+                        size--;
+                        i--;
+                    }
                 }
             }
 
@@ -142,7 +147,9 @@ public class ParetoFront {
                 if (size == tuples.length) {
                     tuples = Arrays.copyOf(tuples, tuples.length * 2);
                 }
-                tuples[size++] = packedTuple;
+                System.arraycopy(tuples, destPos, tuples, destPos + 1, size - destPos - 1);
+                tuples[destPos] = packedTuple;
+                size++;
             }
 
             return this;
