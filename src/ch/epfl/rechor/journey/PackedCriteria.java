@@ -1,5 +1,7 @@
 package ch.epfl.rechor.journey;
 
+import ch.epfl.rechor.Preconditions;
+
 /**
  * A utility class for packing and unpacking optimization criteria into a 64-bit long value.
  * <p>
@@ -17,6 +19,12 @@ package ch.epfl.rechor.journey;
  * <p>This class is final and cannot be instantiated.</p>
  */
 public final class PackedCriteria {
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private PackedCriteria() {
+        throw new UnsupportedOperationException("FormatterFr is a utility class and cannot be instantiated");
+    }
 
     // Constants for bit sizes
     private static final int TIME_BITS = 12;
@@ -40,6 +48,7 @@ public final class PackedCriteria {
 
     // Time representation constants
     private static final int TIME_ORIGIN = -240;
+    private static final int COMPLEMENT = 4095;
     private static final int MAX_TIME = 3119;
 
     /**
@@ -52,12 +61,8 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the arrival time is out of range or changes exceed 7 bits.
      */
     public static long pack(int arrMins, int changes, int payload) {
-        if (arrMins < TIME_ORIGIN || arrMins > MAX_TIME + TIME_ORIGIN) {
-            throw new IllegalArgumentException("Invalid arrival minutes: " + arrMins);
-        }
-        if (changes >>> CHANGES_BITS != 0) {
-            throw new IllegalArgumentException("Too many changes: " + changes);
-        }
+        Preconditions.checkArgument(arrMins >= TIME_ORIGIN && arrMins <= MAX_TIME + TIME_ORIGIN);
+        Preconditions.checkArgument(changes >>> CHANGES_BITS == 0);
 
 //        int translatedArrMins = arrMins - TIME_ORIGIN;
 
@@ -85,14 +90,10 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If no departure time is included.
      */
     public static int depMins(long criteria) {
-        /*
-         TODO: when dep mins is 240 the saved value is 0, and this method throws thinking the packed long doesn't have dep mins packed into it
-         POSSIBLE FIX: check if the packed value needs to be Time Origin dependent
-        */
-        if (!hasDepMins(criteria)) {
-            throw new IllegalArgumentException("Criteria does not contain departure minutes.");
-        }
-        return (int) (criteria >>> DEPARTURE_SHIFT) + TIME_ORIGIN;
+       Preconditions.checkArgument(hasDepMins(criteria));
+
+        int depMins = COMPLEMENT - ((int) (criteria >>> DEPARTURE_SHIFT)) + TIME_ORIGIN;;
+        return depMins;
     }
 
     /**
@@ -167,11 +168,11 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException If the departure time is out of range.
      */
     public static long withDepMins(long criteria, int depMins) {
-        if (depMins < TIME_ORIGIN || depMins > MAX_TIME - TIME_ORIGIN) {
-            throw new IllegalArgumentException("Invalid departure minutes: " + depMins);
-        }
+       Preconditions.checkArgument(depMins >= TIME_ORIGIN && depMins <= MAX_TIME);
 
-       return criteria | (((long) depMins - TIME_ORIGIN) << DEPARTURE_SHIFT);
+        depMins = COMPLEMENT - (depMins - TIME_ORIGIN);
+
+       return criteria | (((long) depMins) << DEPARTURE_SHIFT);
     }
 
     /**
@@ -181,9 +182,8 @@ public final class PackedCriteria {
      * @return The updated packed criteria with one more change.
      */
     public static long withAdditionalChange(long criteria) {
-        if (changes(criteria) == CHANGES_MASK) {
-            throw new IllegalArgumentException("Cannot add a new change");
-        }
+        Preconditions.checkArgument(changes(criteria) != CHANGES_MASK);
+
         return criteria + (1L << CHANGES_SHIFT);
     }
 

@@ -46,18 +46,14 @@ public final class IcalBuilder {
     }
 
     public IcalBuilder end() {
-        if (startedComponents.isEmpty()) {
-            throw new IllegalArgumentException("No component left");
-        }
+        Preconditions.checkArgument(!startedComponents.isEmpty());
         addLine(Name.END, startedComponents.getLast().toString());
         startedComponents.removeLast();
         return this;
     }
 
     public String build() {
-        if (!startedComponents.isEmpty()) {
-            throw new IllegalArgumentException("A component has begun but has never ended");
-        }
+       Preconditions.checkArgument(startedComponents.isEmpty());
 
         return stringBuilder.toString();
     }
