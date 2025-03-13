@@ -18,21 +18,18 @@ public interface TimeTable {
     public abstract Connections connectionsFor(LocalDate date);
 
     public default boolean isStationId(int stopId){
-        return stopId <= 33275;
+        return stopId < stations().size();
     };
 
     public default boolean isPlatformId(int stopId){
-        return stopId > 33275;
+        return stopId >= stations().size();
     }
 
     public default int stationId(int stopId){
-        return stopId;
+        return isStationId(stopId) ? stopId : stopId - stations().size();
     }
 
     public default String platformName(int stopId){
-        if (isPlatformId(stopId)){
-            return platforms().name(stopId);
-        }
-        return null;
+        return isPlatformId(stopId) ? platforms().name(stationId(stopId)) : null;
     }
 }

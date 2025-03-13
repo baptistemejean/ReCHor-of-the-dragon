@@ -134,7 +134,6 @@ public class ParetoFront {
                 if (packedTuple > tuples[i]) {
                     if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
                         shouldAdd = false;
-//                        System.out.println("false");
                         break;
                     }
                     destPos = i + 1;
@@ -151,10 +150,12 @@ public class ParetoFront {
             if (shouldAdd) {
                 // Resize if needed
                  if (size == tuples.length) {
-                     tuples = Arrays.copyOf(tuples, tuples.length + 1);
-                 } else if (size != 0) {
-                     System.arraycopy(tuples, destPos, tuples, destPos + 1, tuples.length - destPos - 1);
+                     tuples = Arrays.copyOf(tuples, tuples.length * 2);
                  }
+
+                if (size != 0) {
+                    System.arraycopy(tuples, destPos, tuples, destPos + 1, tuples.length - destPos - 1);
+                }
 
                 tuples[destPos] = packedTuple;
                 size++;
@@ -198,7 +199,7 @@ public class ParetoFront {
             for (int i = 0; i < that.size; i++) {
                 boolean dominated = false;
                 for (int j = 0; j < this.size; j++) {
-                    if (PackedCriteria.dominatesOrIsEqual(PackedCriteria.withDepMins(this.tuples[j], depMins), PackedCriteria.withDepMins(that.tuples[i], depMins))) {
+                    if (PackedCriteria.dominatesOrIsEqual(this.tuples[j], PackedCriteria.withDepMins(that.tuples[i], depMins))) {
                         dominated = true;
                         break;
                     }
@@ -209,6 +210,18 @@ public class ParetoFront {
             }
             return true;
         }
+
+        /*
+        var b1 = new ParetoFront.Builder();
+        add(b1, 50, 60, 5, 1);
+        add(b1, 50, 65, 4, 2);
+        add(b1, 50, 70, 3, 3);
+
+        var b2 = new ParetoFront.Builder();
+        b2.add(60, 5, 1);
+        b2.add(65, 4, 2);
+        b2.add(70, 3, 3);
+        */
 
         /**
          * Applies the given action to each tuple

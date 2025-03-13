@@ -30,7 +30,6 @@ public final class FormatterFr {
     public static String formatDuration(Duration duration) {
         long hours = duration.toHours();
         long minutes = duration.toMinutes() - 60 * hours;
-        System.out.println(minutes);
         if (hours > 0 ){
             return hours + " h " + minutes + " min";
         } else {

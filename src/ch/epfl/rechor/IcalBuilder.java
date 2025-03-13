@@ -29,7 +29,6 @@ public final class IcalBuilder {
 
     public IcalBuilder add(Name name, String value) {
         String folded = fold(name.toString() + ":" + value);
-//        System.out.println(folded);
         addLine(folded);
         return this;
     }
