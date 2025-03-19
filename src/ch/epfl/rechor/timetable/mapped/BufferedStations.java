@@ -15,11 +15,11 @@ import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.*;
 public class BufferedStations implements Stations {
     // Constants for field indices
     private final static int NAME_ID = 0;
-    private final static int LON_ID = 0;
-    private final static int LAT_ID = 0;
+    private final static int LON_ID = 1;
+    private final static int LAT_ID = 2;
 
     /** Conversion factor for longitude and latitude values. */
-    private final static float LON_LAT_CONVERSION = Math.scalb(360, -32);
+    private final static double LON_LAT_CONVERSION = Math.scalb(360, -32);
 
     // Structure definition
     private static final Structure STRUCTURE = new Structure(

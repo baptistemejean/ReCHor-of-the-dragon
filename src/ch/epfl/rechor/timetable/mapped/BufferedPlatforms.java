@@ -16,7 +16,7 @@ import static ch.epfl.rechor.timetable.mapped.Structure.field;
 public class BufferedPlatforms implements Platforms {
     // Constants for field indices
     private final static int NAME_ID = 0;
-    private final static int STATION_ID = 0;
+    private final static int STATION_ID = 1;
 
     // Structure definition
     private static final Structure STRUCTURE = new Structure(

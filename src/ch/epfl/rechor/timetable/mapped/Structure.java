@@ -34,7 +34,6 @@ public final class Structure {
         }
     }
 
-    private final Field[] fields;
     private final int[] offsets;
     private final int totalSize;
 
@@ -45,8 +44,6 @@ public final class Structure {
      * @throws IllegalArgumentException if the fields are not in order
      */
     public Structure(Field... fields) throws IllegalArgumentException {
-        this.fields = fields.clone();
-
         // Check if fields are in order
         for (int i = 0; i < fields.length; i++) {
             Preconditions.checkArgument(fields[i].index() == i);
