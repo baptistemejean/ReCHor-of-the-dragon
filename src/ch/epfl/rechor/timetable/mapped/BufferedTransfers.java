@@ -21,7 +21,7 @@ public final class BufferedTransfers implements Transfers {
             Structure.field(TRANSFER_MINUTES, Structure.FieldType.U8)
     );
 
-    private final StructuredBuffer structuredBuffer;
+    private final StructuredBuffer buffer;
     private final int[] arrivingTransfers;
 
     /**
@@ -29,12 +29,12 @@ public final class BufferedTransfers implements Transfers {
      * @param buffer The buffer containing the transfer data
      */
     public BufferedTransfers(ByteBuffer buffer) {
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, buffer);
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
 
         // First pass: determine the number of stations
         int maxStationId = -1;
         for (int i = 0; i < size(); i++) {
-            int arrStationId = structuredBuffer.getU16(ARR_STATION_ID, i);
+            int arrStationId = this.buffer.getU16(ARR_STATION_ID, i);
             maxStationId = Math.max(maxStationId, arrStationId);
         }
 
@@ -51,7 +51,7 @@ public final class BufferedTransfers implements Transfers {
         int startIndex = 0;
 
         for (int i = 0; i < size(); i++) {
-            int arrStationId = this.structuredBuffer.getU16(ARR_STATION_ID, i);
+            int arrStationId = this.buffer.getU16(ARR_STATION_ID, i);
 
             if (arrStationId != currentArrStation) {
                 // Close the previous interval if there was one
@@ -67,18 +67,18 @@ public final class BufferedTransfers implements Transfers {
 
         // Close the last interval
         if (currentArrStation != -1) {
-            arrivingTransfers[currentArrStation] = PackedRange.pack(startIndex, structuredBuffer.size());
+            arrivingTransfers[currentArrStation] = PackedRange.pack(startIndex, size());
         }
     }
 
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 
     @Override
     public int depStationId(int index) {
-        return structuredBuffer.getU16(DEP_STATION_ID, index);
+        return buffer.getU16(DEP_STATION_ID, index);
     }
 
     @Override
@@ -104,7 +104,7 @@ public final class BufferedTransfers implements Transfers {
 
     @Override
     public int minutes(int index) {
-        return structuredBuffer.getU8(TRANSFER_MINUTES, index);
+        return buffer.getU8(TRANSFER_MINUTES, index);
     }
 
 //    @Override

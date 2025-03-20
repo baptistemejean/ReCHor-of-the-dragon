@@ -20,7 +20,7 @@ public final class BufferedStationAliases implements StationAliases {
     );
 
     private final List<String> stringTable;
-    private final StructuredBuffer structuredBuffer;
+    private final StructuredBuffer buffer;
 
     /**
      * Constructs a BufferedStationAliases from a string table and a buffer
@@ -31,7 +31,7 @@ public final class BufferedStationAliases implements StationAliases {
      */
     public BufferedStationAliases(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, buffer);
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
     }
 
     /**
@@ -43,7 +43,7 @@ public final class BufferedStationAliases implements StationAliases {
      */
     @Override
     public String alias(int id) throws IndexOutOfBoundsException {
-        return stringTable.get(structuredBuffer.getU16(ALIAS_ID, id));
+        return stringTable.get(buffer.getU16(ALIAS_ID, id));
     }
 
     /**
@@ -55,11 +55,11 @@ public final class BufferedStationAliases implements StationAliases {
      */
     @Override
     public String stationName(int id) throws IndexOutOfBoundsException {
-        return stringTable.get(structuredBuffer.getU16(STATION_NAME_ID, id));
+        return stringTable.get(buffer.getU16(STATION_NAME_ID, id));
     }
 
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 }

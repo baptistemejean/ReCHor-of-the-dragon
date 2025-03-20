@@ -28,54 +28,54 @@ public final class BufferedConnections implements Connections {
             field(TRIP_POS_ID, S32)
     );
 
-    private final StructuredBuffer structuredBuffer;
+    private final StructuredBuffer buffer;
     private final IntBuffer successorBuffer;
 
     /**
      * Constructs a BufferedConnections from buffers containing the flattened data.
      *
-     * @param structuredBuffer The buffer containing the connection data
+     * @param buffer The buffer containing the connection data
      * @param succBuffer The buffer containing the successor connection data
      */
-    public BufferedConnections(ByteBuffer structuredBuffer, ByteBuffer succBuffer) {
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, structuredBuffer);
+    public BufferedConnections(ByteBuffer buffer, ByteBuffer succBuffer) {
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
         this.successorBuffer = succBuffer.asIntBuffer();
     }
 
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 
     @Override
     public int depStopId(int id) {
-        return structuredBuffer.getU16(DEP_STOP_ID, id);
+        return buffer.getU16(DEP_STOP_ID, id);
     }
 
     @Override
     public int depMins(int index) {
-        return structuredBuffer.getU16(DEP_MINUTES, index);
+        return buffer.getU16(DEP_MINUTES, index);
     }
 
     @Override
     public int arrStopId(int index) {
-        return structuredBuffer.getU16(ARR_STOP_ID, index);
+        return buffer.getU16(ARR_STOP_ID, index);
     }
 
     @Override
     public int arrMins(int index) {
-        return structuredBuffer.getU16(ARR_MINUTES, index);
+        return buffer.getU16(ARR_MINUTES, index);
     }
 
     @Override
     public int tripPos(int index) {
-        int tripPosId = structuredBuffer.getS32(TRIP_POS_ID, index);
+        int tripPosId = buffer.getS32(TRIP_POS_ID, index);
         return tripPosId >>> 8; // Extract the trip ID from the upper 24 bits
     }
 
     @Override
     public int tripId(int index) {
-        int tripPosId = structuredBuffer.getS32(TRIP_POS_ID, index);
+        int tripPosId = buffer.getS32(TRIP_POS_ID, index);
         return tripPosId & 0xFF; // Extract the position from the lower 8 bits
     }
 

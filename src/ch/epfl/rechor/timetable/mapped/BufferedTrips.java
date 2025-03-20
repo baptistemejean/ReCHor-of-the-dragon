@@ -23,33 +23,33 @@ public final class BufferedTrips implements Trips {
     );
 
     private final List<String> stringTable;
-    private final StructuredBuffer structuredBuffer;
+    private final StructuredBuffer buffer;
 
     /**
      * Constructs a BufferedTrips from a string table and a buffer
      * containing the flattened data.
      *
      * @param stringTable The table of strings referenced by the flattened data
-     * @param structuredBuffer The buffer containing the flattened data
+     * @param buffer The buffer containing the flattened data
      */
-    public BufferedTrips(List<String> stringTable, ByteBuffer structuredBuffer) {
+    public BufferedTrips(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, structuredBuffer);
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
     }
 
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 
     @Override
     public int routeId(int index) {
-        return structuredBuffer.getU16(ROUTE_ID, index);
+        return buffer.getU16(ROUTE_ID, index);
     }
 
     @Override
     public String destination(int index) {
-        int destinationStringIndex = structuredBuffer.getU16(DESTINATION_ID, index);
+        int destinationStringIndex = buffer.getU16(DESTINATION_ID, index);
         return stringTable.get(destinationStringIndex);
     }
 }

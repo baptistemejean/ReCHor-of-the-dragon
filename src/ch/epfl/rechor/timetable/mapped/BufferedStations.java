@@ -28,7 +28,7 @@ public class BufferedStations implements Stations {
             field(LAT_ID, S32)
     );
 
-    private final StructuredBuffer structuredBuffer;
+    private final StructuredBuffer buffer;
     private final List<String> stringTable;
 
     /**
@@ -39,7 +39,7 @@ public class BufferedStations implements Stations {
      */
     public BufferedStations(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, buffer);
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
     }
 
     /**
@@ -51,7 +51,7 @@ public class BufferedStations implements Stations {
      */
     @Override
     public String name(int id) throws IndexOutOfBoundsException {
-        return stringTable.get(structuredBuffer.getU16(NAME_ID, id));
+        return stringTable.get(buffer.getU16(NAME_ID, id));
     }
 
     /**
@@ -63,7 +63,7 @@ public class BufferedStations implements Stations {
      */
     @Override
     public double longitude(int id) throws IndexOutOfBoundsException {
-        return structuredBuffer.getS32(LON_ID, id) * LON_LAT_CONVERSION;
+        return buffer.getS32(LON_ID, id) * LON_LAT_CONVERSION;
     }
 
     /**
@@ -75,7 +75,7 @@ public class BufferedStations implements Stations {
      */
     @Override
     public double latitude(int id) throws IndexOutOfBoundsException {
-        return structuredBuffer.getS32(LAT_ID, id) * LON_LAT_CONVERSION;
+        return buffer.getS32(LAT_ID, id) * LON_LAT_CONVERSION;
     }
 
     /**
@@ -85,6 +85,6 @@ public class BufferedStations implements Stations {
      */
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 }

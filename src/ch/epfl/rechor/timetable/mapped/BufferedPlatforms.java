@@ -23,8 +23,8 @@ public class BufferedPlatforms implements Platforms {
             field(STATION_ID, U16)
     );
 
-    private StructuredBuffer structuredBuffer;
-    private List<String> stringTable;
+    private final StructuredBuffer buffer;
+    private final List<String> stringTable;
 
     /**
      * Constructs a {@link BufferedPlatforms} instance with the given string table and byte buffer.
@@ -34,7 +34,7 @@ public class BufferedPlatforms implements Platforms {
      */
     public BufferedPlatforms(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;
-        this.structuredBuffer = new StructuredBuffer(STRUCTURE, buffer);
+        this.buffer = new StructuredBuffer(STRUCTURE, buffer);
     }
 
     /**
@@ -46,7 +46,7 @@ public class BufferedPlatforms implements Platforms {
      */
     @Override
     public String name(int id) throws IndexOutOfBoundsException {
-        return stringTable.get(structuredBuffer.getU16(NAME_ID, id));
+        return stringTable.get(buffer.getU16(NAME_ID, id));
     }
 
     /**
@@ -58,7 +58,7 @@ public class BufferedPlatforms implements Platforms {
      */
     @Override
     public int stationId(int id) throws IndexOutOfBoundsException {
-        return structuredBuffer.getU16(STATION_ID, id);
+        return buffer.getU16(STATION_ID, id);
     }
 
     /**
@@ -68,6 +68,6 @@ public class BufferedPlatforms implements Platforms {
      */
     @Override
     public int size() {
-        return structuredBuffer.size();
+        return buffer.size();
     }
 }
