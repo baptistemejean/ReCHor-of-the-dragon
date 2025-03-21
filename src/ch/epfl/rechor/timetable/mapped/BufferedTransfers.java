@@ -3,6 +3,7 @@ package ch.epfl.rechor.timetable.mapped;
 import ch.epfl.rechor.timetable.Transfers;
 import ch.epfl.rechor.PackedRange;
 import java.nio.ByteBuffer;
+import java.util.NoSuchElementException;
 
 /**
  * Implementation of the Transfers interface that accesses flattened data
@@ -72,18 +73,12 @@ public final class BufferedTransfers implements Transfers {
     }
 
     @Override
-    public int size() {
-        return buffer.size();
-    }
-
-    @Override
     public int depStationId(int index) {
         return buffer.getU16(DEP_STATION_ID, index);
     }
 
     @Override
     public int arrivingAt(int index) {
-//        return buffer.getU16(ARR_STATION_ID, index);
         return arrivingTransfers[index];
     }
 
@@ -99,7 +94,7 @@ public final class BufferedTransfers implements Transfers {
             }
         }
 
-        return -1;
+        throw new NoSuchElementException();
     }
 
     @Override
@@ -107,12 +102,13 @@ public final class BufferedTransfers implements Transfers {
         return buffer.getU8(TRANSFER_MINUTES, index);
     }
 
-//    @Override
-//    public int arrivingAt(int stationId) {
-//        if (stationId < 0 || stationId >= arrivingTransfers.length) {
-//            return packInterval(-1, -1); // No transfers arriving at this station
-//        }
-//
-//        return arrivingTransfers[stationId];
-//    }
+    /**
+     * Returns the total number of transfers stored in the buffer.
+     *
+     * @return the number of transfers
+     */
+    @Override
+    public int size() {
+        return buffer.size();
+    }
 }
