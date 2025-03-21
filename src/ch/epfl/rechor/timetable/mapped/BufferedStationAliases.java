@@ -58,6 +58,11 @@ public final class BufferedStationAliases implements StationAliases {
         return stringTable.get(buffer.getU16(STATION_NAME_ID, id));
     }
 
+    /**
+     * Returns the total number of station aliases stored in the buffer.
+     *
+     * @return the number of station aliases
+     */
     @Override
     public int size() {
         return buffer.size();

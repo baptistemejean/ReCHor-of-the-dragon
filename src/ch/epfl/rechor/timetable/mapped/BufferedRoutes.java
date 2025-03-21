@@ -39,11 +39,6 @@ public final class BufferedRoutes implements Routes {
     }
 
     @Override
-    public int size() {
-        return buffer.size();
-    }
-
-    @Override
     public String name(int index) {
         int nameStringIndex = buffer.getU16(NAME_ID, index);
         return stringTable.get(nameStringIndex);
@@ -53,5 +48,15 @@ public final class BufferedRoutes implements Routes {
     public Vehicle vehicle(int index) {
         int vehicleKind = buffer.getU8(KIND, index);
         return Vehicle.values()[vehicleKind];
+    }
+
+    /**
+     * Returns the total number of routes stored in the buffer.
+     *
+     * @return the number of routes
+     */
+    @Override
+    public int size() {
+        return buffer.size();
     }
 }

@@ -38,11 +38,6 @@ public final class BufferedTrips implements Trips {
     }
 
     @Override
-    public int size() {
-        return buffer.size();
-    }
-
-    @Override
     public int routeId(int index) {
         return buffer.getU16(ROUTE_ID, index);
     }
@@ -51,5 +46,15 @@ public final class BufferedTrips implements Trips {
     public String destination(int index) {
         int destinationStringIndex = buffer.getU16(DESTINATION_ID, index);
         return stringTable.get(destinationStringIndex);
+    }
+
+    /**
+     * Returns the total number of trips stored in the buffer.
+     *
+     * @return the number of trips
+     */
+    @Override
+    public int size() {
+        return buffer.size();
     }
 }

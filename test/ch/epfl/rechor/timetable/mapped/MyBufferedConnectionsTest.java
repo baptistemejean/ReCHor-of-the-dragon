@@ -19,8 +19,6 @@ class MyBufferedConnectionsTest {
     private static final HexFormat HEX = HexFormat.ofDelimiter(" ");
 
 
-
-
     private static final ByteBuffer CONNECTIONS_BUFFER = ByteBuffer.wrap(new byte[]{
             0x00, 0x10,  // DEP_STOP_ID = 16
             0x00, 0x3C,  // DEP_MINUTES = 60

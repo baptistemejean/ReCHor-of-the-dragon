@@ -16,13 +16,11 @@ class MyBufferedTripsTest {
     // Structure des courses aplaties : ROUTE_ID (U16) + DESTINATION_ID (U16)
     private static final HexFormat HEX = HexFormat.ofDelimiter(" ");
 
-
     @Test
     void constructorRejectsInvalidBufferSize() {
         ByteBuffer buffer = ByteBuffer.allocate(3); // Doit être un multiple de 4 (2 + 2)
         assertThrows(IllegalArgumentException.class, () -> new BufferedTrips(STRING_TABLE, buffer));
     }
-
 
     @Test
     void sizeComputesCorrectly() {
@@ -30,7 +28,6 @@ class MyBufferedTripsTest {
         BufferedTrips trips = new BufferedTrips(STRING_TABLE, buffer);
         assertEquals(2, trips.size());
     }
-
 
     @Test
     void destinationReturnsCorrectName() {
@@ -56,8 +53,6 @@ class MyBufferedTripsTest {
         BufferedTrips trips = new BufferedTrips(STRING_TABLE, buffer);
         assertThrows(IndexOutOfBoundsException.class, () -> trips.destination(0));
     }
-
-
 
 
     /**
