@@ -21,7 +21,7 @@ import ch.epfl.rechor.timetable.TimeTable;
 import ch.epfl.rechor.timetable.Transfers;
 
 /**
- * Represents a public transport timetable whose (flattened) data are stored in files.
+ * Represents a public transport timetable whose data are stored in files, then mapped to the memory.
  * @param directory the path to the directory containing the timetable data files
  * @param stringTable the table of strings
  * @param stations the stations

@@ -69,7 +69,13 @@ public class ParetoFront {
         for (long packed : packedCriteria) {
             int arrMins = PackedCriteria.arrMins(packed);
             int changes = PackedCriteria.changes(packed);
-            sb.append(String.format("  {arrMins: %d, changes: %d}\n", arrMins, changes));
+            int payload = PackedCriteria.payload(packed);
+            if (PackedCriteria.hasDepMins(packed)) {
+                int depMins = PackedCriteria.depMins(packed);
+                sb.append(String.format("  {arrMins: %d, depMins: %d, changes: %d, payload: %d}\n", arrMins, depMins, changes, payload));
+            } else {
+                sb.append(String.format("  {arrMins: %d, changes: %d, payload: %d}\n", arrMins, changes, payload));
+            }
         }
         sb.append(String.format("  {size: %d}\n", size()));
         sb.append("]");

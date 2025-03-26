@@ -26,10 +26,11 @@ public interface TimeTable {
     }
 
     public default int stationId(int stopId){
-        return isStationId(stopId) ? stopId : stopId - stations().size();
+//        return isStationId(stopId) ? stopId : stopId - stations().size();
+        return isStationId(stopId) ? stopId : platforms().stationId(stopId - stations().size());
     }
 
     public default String platformName(int stopId){
-        return isPlatformId(stopId) ? platforms().name(stationId(stopId)) : null;
+        return isPlatformId(stopId) ? platforms().name(stopId - stations().size()) : null;
     }
 }

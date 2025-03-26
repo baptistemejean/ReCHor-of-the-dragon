@@ -78,8 +78,8 @@ public final class BufferedTransfers implements Transfers {
     }
 
     @Override
-    public int arrivingAt(int index) {
-        return arrivingTransfers[index];
+    public int arrivingAt(int stationIndex) {
+        return arrivingTransfers[stationIndex];
     }
 
     @Override

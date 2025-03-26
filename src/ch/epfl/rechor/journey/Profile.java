@@ -6,6 +6,7 @@ import ch.epfl.rechor.timetable.Trips;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -31,7 +32,7 @@ public record Profile(
      * @param timeTable the timetable corresponding to the profile
      * @param date the date corresponding to the profile
      * @param arrStationId the index of the arrival station
-     * @param stationFront the table of Pareto frontiers for all stations
+     * @param stationFront the table of Pareto fronts for all stations
      */
     public Profile {
         stationFront = List.copyOf(stationFront);
@@ -78,6 +79,7 @@ public record Profile(
         private List<ParetoFront.Builder> stationFrontBuilders = new ArrayList<>();
         private List<ParetoFront.Builder> tripFrontBuilders = new ArrayList<>();
 
+
         /**
          * Constructs a profile builder for the given timetable, date, and arrival station.
          *
@@ -90,8 +92,8 @@ public record Profile(
             this.date = date;
             this.arrStationId = arrStationId;
 
-            this.stationFrontBuilders = new ArrayList<>();
-            this.tripFrontBuilders = new ArrayList<>();
+            this.stationFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.stations().size(), null));
+            this.tripFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.tripsFor(date).size(), null));
         }
 
         /**
@@ -114,7 +116,6 @@ public record Profile(
          */
         public void setForStation(int stationId, ParetoFront.Builder builder) throws IndexOutOfBoundsException {
             stationFrontBuilders.set(stationId, builder);
-
         }
 
         /**
@@ -140,7 +141,7 @@ public record Profile(
         }
 
         /**
-         * Builds and returns the simple profile (without Pareto frontiers for trips).
+         * Builds and returns the simple profile (without Pareto fronts for trips).
          *
          * @return the built profile
          */
