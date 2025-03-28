@@ -114,7 +114,6 @@ public record Profile(
          */
         public void setForStation(int stationId, ParetoFront.Builder builder) throws IndexOutOfBoundsException {
             stationFrontBuilders.set(stationId, builder);
-
         }
 
         /**
@@ -152,7 +151,6 @@ public record Profile(
                         ? builder.build()
                         : ParetoFront.EMPTY;
             }
-
             return new Profile(timeTable, date, arrStationId, List.of(stationFronts));
         }
     }
