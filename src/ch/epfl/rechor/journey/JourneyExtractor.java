@@ -65,20 +65,28 @@ public final class JourneyExtractor {
         int currentStopId = depStationId;
         int arrMins = PackedCriteria.arrMins(initialCriteria);
         int currentArrMins = 0;
-        int changes = PackedCriteria.changes(initialCriteria);
 
-        for (int remainingChanges = changes; remainingChanges >= 0; remainingChanges--) {
+        int payload = PackedCriteria.payload(initialCriteria);
+        int connectionId = payload >> 8;
+        int connectionDepStopId = connections.depStopId(connectionId);
+
+        // Initial foot leg if needed
+        if (timeTable.stationId(connectionDepStopId) != currentStopId) {
+            addFootLeg(connections.depMins(connectionId), false, currentStopId, connectionDepStopId, timeTable, profile, legs);
+        }
+
+        for (int remainingChanges = PackedCriteria.changes(initialCriteria); remainingChanges >= 0; remainingChanges--) {
             ParetoFront paretoFront = profile.forStation(timeTable.stationId(currentStopId));
             long currentCriteria = paretoFront.get(arrMins, remainingChanges);
 
-            int payload = PackedCriteria.payload(currentCriteria);
-            int connectionId = payload >> 8;
+            payload = PackedCriteria.payload(currentCriteria);
+            connectionId = payload >> 8;
             int numStops = payload & 0xFF;
-            int connectionDepStopId = connections.depStopId(connectionId);
+            connectionDepStopId = connections.depStopId(connectionId);
 
             // Add foot leg if previous leg was a transport leg
             if (!legs.isEmpty() && legs.getLast() instanceof Journey.Leg.Transport) {
-                addFootLeg(currentArrMins, currentStopId, connectionDepStopId, timeTable, profile, legs);
+                addFootLeg(currentArrMins, true, currentStopId, connectionDepStopId, timeTable, profile, legs);
             }
 
             // Add transport leg
@@ -87,6 +95,11 @@ public final class JourneyExtractor {
             // Update loop variables
             currentStopId = connections.arrStopId(connectionId);
             currentArrMins = connections.arrMins(connectionId);
+        }
+
+        // Final foot leg if needed
+        if (timeTable.stationId(currentStopId) != profile.arrStationId()) {
+            addFootLeg(currentArrMins, true, currentStopId, profile.arrStationId(), timeTable, profile, legs);
         }
 
         return legs;
@@ -116,6 +129,8 @@ public final class JourneyExtractor {
         int tripId = connections.tripId(connectionId);
         int depStopId = connections.depStopId(connectionId);
 
+        int initialDepMins = connections.depMins(connectionId);
+
         List<Journey.Leg.IntermediateStop> intermediateStops = new ArrayList<>();
 
         for (int i = 0; i < numStops; i++) {
@@ -135,7 +150,7 @@ public final class JourneyExtractor {
 
         legs.add(new Journey.Leg.Transport(
                 stopFromStopId(depStopId, timeTable, stations),
-                dateTimeFromMins(connections.depMins(connectionId), profile.date()),
+                dateTimeFromMins(initialDepMins, profile.date()),
                 stopFromStopId(arrStopId, timeTable, stations),
                 dateTimeFromMins(connections.arrMins(connectionId), profile.date()),
                 intermediateStops,
@@ -179,7 +194,8 @@ public final class JourneyExtractor {
     /**
      * Adds a foot leg between two stops when a transfer is possible.
      *
-     * @param depMins Departure minutes
+     * @param mins Minutes (could be departure or arrival)
+     * @param isDepMins Whether the minutes given above describe departure or arrival times
      * @param depStopId Departure stop identifier
      * @param arrStopId Arrival stop identifier
      * @param timeTable Timetable for transfer information
@@ -187,7 +203,8 @@ public final class JourneyExtractor {
      * @param legs List of journey legs to modify
      */
     private static void addFootLeg(
-            int depMins,
+            int mins,
+            boolean isDepMins,
             int depStopId,
             int arrStopId,
             TimeTable timeTable,
@@ -200,7 +217,15 @@ public final class JourneyExtractor {
         int transferRange = timeTable.transfers().arrivingAt(arrStationId);
         for (int i = PackedRange.startInclusive(transferRange); i < PackedRange.endExclusive(transferRange); ++i) {
             if (timeTable.transfers().depStationId(i) == depStationId) {
-                int arrMins = depMins + timeTable.transfers().minutes(i);
+                int depMins;
+                int arrMins;
+                if (isDepMins) {
+                    depMins = mins;
+                    arrMins = mins + timeTable.transfers().minutes(i);
+                } else {
+                    depMins = mins - timeTable.transfers().minutes(i);
+                    arrMins = mins;
+                }
 
                 legs.add(new Journey.Leg.Foot(
                         stopFromStopId(depStopId, timeTable, timeTable.stations()),
