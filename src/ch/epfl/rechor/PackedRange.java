@@ -3,8 +3,8 @@ package ch.epfl.rechor;
 /**
  * A utility class for packing and unpacking integer intervals into a single 32-bit integer.
  * <p>
- * The 24 most significant bits store the inclusive start of the interval,
- * while the 8 least significant bits store the length of the interval.
+ * The 24 most significant bits store the inclusive start of the interval, while the 8 least
+ * significant bits store the length of the interval.
  * </p>
  *
  * <p>This class is final and cannot be instantiated.</p>
@@ -14,21 +14,22 @@ public final class PackedRange {
      * Private constructor to prevent instantiation.
      */
     private PackedRange() {
-        throw new UnsupportedOperationException("PackedRange is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException(
+                "PackedRange is a utility class and cannot be instantiated");
     }
 
     /**
      * Packs an integer interval into a 32-bit integer.
      * <p>
-     * The 24 most significant bits store {@code startInclusive}, and
-     * the 8 least significant bits store the length of the interval.
+     * The 24 most significant bits store {@code startInclusive}, and the 8 least significant bits
+     * store the length of the interval.
      * </p>
      *
      * @param startInclusive The inclusive start of the interval (must fit within 24 bits).
-     * @param endExclusive The exclusive end of the interval.
+     * @param endExclusive   The exclusive end of the interval.
      * @return A 32-bit integer representing the packed interval.
-     * @throws IllegalArgumentException If {@code startInclusive} exceeds 24 bits or
-     *                                  if the interval length is not in the range [0, 255].
+     * @throws IllegalArgumentException If {@code startInclusive} exceeds 24 bits or if the interval
+     *                                  length is not in the range [0, 255].
      */
     public static int pack(int startInclusive, int endExclusive) {
         Preconditions.checkArgument((startInclusive >> 24) == 0);

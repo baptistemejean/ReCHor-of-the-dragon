@@ -1,16 +1,18 @@
 package ch.epfl.rechor.timetable.mapped;
 
-import ch.epfl.rechor.timetable.Routes;
 import ch.epfl.rechor.journey.Vehicle;
+import ch.epfl.rechor.timetable.Routes;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.*;
+import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.U16;
+import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.U8;
 import static ch.epfl.rechor.timetable.mapped.Structure.field;
 
 /**
- * Implementation of the Routes interface that accesses flattened data
- * in a ByteBuffer.
+ * Implementation of the {@link Routes} interface that accesses flattened data in a
+ * {@link ByteBuffer}.
  */
 public final class BufferedRoutes implements Routes {
     // Constants for field indices
@@ -18,20 +20,16 @@ public final class BufferedRoutes implements Routes {
     private static final int KIND = 1;
 
     // Structure definition
-    private static final Structure STRUCTURE = new Structure(
-            field(NAME_ID, U16),
-            field(KIND, U8)
-    );
+    private static final Structure STRUCTURE = new Structure(field(NAME_ID, U16), field(KIND, U8));
 
     private final List<String> stringTable;
     private final StructuredBuffer buffer;
 
     /**
-     * Constructs a BufferedRoutes from a string table and a buffer
-     * containing the flattened data.
+     * Constructs a BufferedRoutes from a string table and a buffer containing the flattened data.
      *
      * @param stringTable The table of strings referenced by the flattened data
-     * @param buffer The buffer containing the flattened data
+     * @param buffer      The buffer containing the flattened data
      */
     public BufferedRoutes(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;

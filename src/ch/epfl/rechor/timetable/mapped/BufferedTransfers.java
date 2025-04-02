@@ -1,13 +1,14 @@
 package ch.epfl.rechor.timetable.mapped;
 
-import ch.epfl.rechor.timetable.Transfers;
 import ch.epfl.rechor.PackedRange;
+import ch.epfl.rechor.timetable.Transfers;
+
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
 
 /**
- * Implementation of the Transfers interface that accesses flattened data
- * in a ByteBuffer.
+ * Implementation of the {@link Transfers} interface that accesses flattened data in a
+ * {@link ByteBuffer}.
  */
 public final class BufferedTransfers implements Transfers {
     // Constants for field indices
@@ -27,6 +28,7 @@ public final class BufferedTransfers implements Transfers {
 
     /**
      * Constructs a BufferedTransfers from a buffer containing the flattened data.
+     *
      * @param buffer The buffer containing the transfer data
      */
     public BufferedTransfers(ByteBuffer buffer) {
@@ -41,11 +43,11 @@ public final class BufferedTransfers implements Transfers {
 
         // Create the lookup table for arriving transfers
         arrivingTransfers = new int[maxStationId + 1];
-//
-//        // Initialize with invalid intervals
-//        for (int i = 0; i < arrivingTransfers.length; i++) {
-//            arrivingTransfers[i] = PackedRange.pack(-1, -1);
-//        }
+        //
+        //        // Initialize with invalid intervals
+        //        for (int i = 0; i < arrivingTransfers.length; i++) {
+        //            arrivingTransfers[i] = PackedRange.pack(-1, -1);
+        //        }
 
         // Second pass: fill the lookup table
         int currentArrStation = -1;

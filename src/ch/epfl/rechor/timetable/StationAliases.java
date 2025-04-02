@@ -1,7 +1,7 @@
 package ch.epfl.rechor.timetable;
 
-public interface StationAliases extends Indexed{
-    public abstract String alias(int id) throws IndexOutOfBoundsException;
+public interface StationAliases extends Indexed {
+    String alias(int id) throws IndexOutOfBoundsException;
 
-    public abstract String stationName (int id) throws IndexOutOfBoundsException;
+    String stationName(int id) throws IndexOutOfBoundsException;
 }

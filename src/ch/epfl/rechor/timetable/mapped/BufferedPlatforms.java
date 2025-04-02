@@ -5,12 +5,12 @@ import ch.epfl.rechor.timetable.Platforms;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.*;
+import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.U16;
 import static ch.epfl.rechor.timetable.mapped.Structure.field;
 
 /**
- * Represents a buffered implementation of the {@link Platforms} interface,
- * storing platform data in a structured buffer for efficient access.
+ * Implementation of the {@link Platforms} interface that accesses flattened data in a
+ * {@link ByteBuffer}.
  */
 public class BufferedPlatforms implements Platforms {
     // Constants for field indices
@@ -18,8 +18,7 @@ public class BufferedPlatforms implements Platforms {
     private final static int STATION_ID = 1;
 
     // Structure definition
-    private static final Structure STRUCTURE = new Structure(
-            field(NAME_ID, U16),
+    private static final Structure STRUCTURE = new Structure(field(NAME_ID, U16),
             field(STATION_ID, U16)
     );
 
@@ -30,7 +29,7 @@ public class BufferedPlatforms implements Platforms {
      * Constructs a {@link BufferedPlatforms} instance with the given string table and byte buffer.
      *
      * @param stringTable the list of strings
-     * @param buffer the byte buffer containing structured platform data
+     * @param buffer      the byte buffer containing structured platform data
      */
     public BufferedPlatforms(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;

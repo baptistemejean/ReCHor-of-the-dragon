@@ -1,15 +1,17 @@
 package ch.epfl.rechor.timetable.mapped;
 
 import ch.epfl.rechor.timetable.Connections;
+
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.*;
+import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.S32;
+import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.U16;
 import static ch.epfl.rechor.timetable.mapped.Structure.field;
 
 /**
- * Implementation of the Connections interface that accesses flattened data
- * in a {@link ByteBuffer}.
+ * Implementation of the {@link Connections} interface that accesses flattened data in a
+ * {@link ByteBuffer}.
  */
 public final class BufferedConnections implements Connections {
     // Constants for field indices
@@ -34,7 +36,7 @@ public final class BufferedConnections implements Connections {
     /**
      * Constructs a BufferedConnections from buffers containing the flattened data.
      *
-     * @param buffer The buffer containing the connection data
+     * @param buffer     The buffer containing the connection data
      * @param succBuffer The buffer containing the successor connection data
      */
     public BufferedConnections(ByteBuffer buffer, ByteBuffer succBuffer) {

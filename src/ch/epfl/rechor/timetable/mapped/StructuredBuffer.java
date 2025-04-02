@@ -3,8 +3,8 @@ package ch.epfl.rechor.timetable.mapped;
 import java.nio.ByteBuffer;
 
 /**
- * Represents a structured byte buffer, allowing access to flattened data
- * according to a defined structure.
+ * Represents a structured byte buffer, allowing access to flattened data according to a defined
+ * structure.
  */
 public final class StructuredBuffer {
     private final Structure structure;
@@ -15,7 +15,7 @@ public final class StructuredBuffer {
      * Creates a new structured buffer with the given structure and buffer.
      *
      * @param structure The structure describing the data format
-     * @param buffer The buffer containing the data
+     * @param buffer    The buffer containing the data
      * @throws IllegalArgumentException if the buffer size is not a multiple of the structure size
      */
     public StructuredBuffer(Structure structure, ByteBuffer buffer) {
@@ -27,7 +27,8 @@ public final class StructuredBuffer {
 
         if (bufferSize % structureSize != 0) {
             throw new IllegalArgumentException(
-                    "Buffer size (" + bufferSize + ") is not a multiple of structure size (" + structureSize + ")");
+                    "Buffer size (" + bufferSize + ") is not a multiple of structure size (" +
+                    structureSize + ")");
         }
 
         this.size = bufferSize / structureSize;
@@ -45,7 +46,7 @@ public final class StructuredBuffer {
     /**
      * Gets an unsigned 8-bit integer value from the buffer.
      *
-     * @param fieldIndex The index of the field
+     * @param fieldIndex   The index of the field
      * @param elementIndex The index of the element
      * @return The unsigned 8-bit integer value
      * @throws IndexOutOfBoundsException if either index is invalid
@@ -58,7 +59,7 @@ public final class StructuredBuffer {
     /**
      * Gets an unsigned 16-bit integer value from the buffer.
      *
-     * @param fieldIndex The index of the field
+     * @param fieldIndex   The index of the field
      * @param elementIndex The index of the element
      * @return The unsigned 16-bit integer value
      * @throws IndexOutOfBoundsException if either index is invalid
@@ -71,7 +72,7 @@ public final class StructuredBuffer {
     /**
      * Gets a signed 32-bit integer value from the buffer.
      *
-     * @param fieldIndex The index of the field
+     * @param fieldIndex   The index of the field
      * @param elementIndex The index of the element
      * @return The signed 32-bit integer value
      * @throws IndexOutOfBoundsException if either index is invalid

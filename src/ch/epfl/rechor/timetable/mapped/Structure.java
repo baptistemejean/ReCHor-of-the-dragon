@@ -7,33 +7,6 @@ import ch.epfl.rechor.Preconditions;
  */
 public final class Structure {
 
-    /**
-     * Enumeration of possible field types.
-     */
-    public enum FieldType {
-        U8,  // Unsigned 8-bit integer
-        U16, // Unsigned 16-bit integer
-        S32  // Signed 32-bit integer
-    }
-
-    /**
-     * Represents a field in the structure.
-     */
-    public record Field(int index, FieldType type) {
-        /**
-         * Creates a new field with the given index and type.
-         *
-         * @param index The index of the field
-         * @param type The type of the field
-         * @throws NullPointerException if type is null
-         */
-        public Field {
-            if (type == null) {
-                throw new NullPointerException();
-            }
-        }
-    }
-
     private final int[] offsets;
     private final int totalSize;
 
@@ -62,34 +35,10 @@ public final class Structure {
     }
 
     /**
-     * Returns the total size of the structure in bytes.
-     *
-     * @return The total size of the structure
-     */
-    public int totalSize() {
-        return totalSize;
-    }
-
-    /**
-     * Returns the offset of the given field in the given element.
-     *
-     * @param fieldIndex The index of the field
-     * @param elementIndex The index of the element
-     * @return The offset of the field in the element
-     * @throws IndexOutOfBoundsException if the field index is invalid
-     */
-    public int offset(int fieldIndex, int elementIndex) throws IndexOutOfBoundsException {
-//        if (fieldIndex < 0 || fieldIndex >= fields.length) {
-//            throw new IndexOutOfBoundsException("Invalid field index");
-//        }
-        return elementIndex * totalSize + offsets[fieldIndex];
-    }
-
-    /**
      * Utility method to create a field without using 'new'.
      *
      * @param index The index of the field
-     * @param type The type of the field
+     * @param type  The type of the field
      * @return A new field with the given index and type
      */
     public static Field field(int index, FieldType type) {
@@ -108,5 +57,56 @@ public final class Structure {
             case U16 -> 2;
             case S32 -> 4;
         };
+    }
+
+    /**
+     * Returns the total size of the structure in bytes.
+     *
+     * @return The total size of the structure
+     */
+    public int totalSize() {
+        return totalSize;
+    }
+
+    /**
+     * Returns the offset of the given field in the given element.
+     *
+     * @param fieldIndex   The index of the field
+     * @param elementIndex The index of the element
+     * @return The offset of the field in the element
+     * @throws IndexOutOfBoundsException if the field index is invalid
+     */
+    public int offset(int fieldIndex, int elementIndex) throws IndexOutOfBoundsException {
+        //        if (fieldIndex < 0 || fieldIndex >= fields.length) {
+        //            throw new IndexOutOfBoundsException("Invalid field index");
+        //        }
+        return elementIndex * totalSize + offsets[fieldIndex];
+    }
+
+    /**
+     * Enumeration of possible field types.
+     */
+    public enum FieldType {
+        U8,  // Unsigned 8-bit integer
+        U16, // Unsigned 16-bit integer
+        S32  // Signed 32-bit integer
+    }
+
+    /**
+     * Represents a field in the structure.
+     */
+    public record Field(int index, FieldType type) {
+        /**
+         * Creates a new field with the given index and type.
+         *
+         * @param index The index of the field
+         * @param type  The type of the field
+         * @throws NullPointerException if type is null
+         */
+        public Field {
+            if (type == null) {
+                throw new NullPointerException();
+            }
+        }
     }
 }

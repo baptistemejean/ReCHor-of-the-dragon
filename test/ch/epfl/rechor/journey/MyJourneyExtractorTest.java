@@ -5,7 +5,6 @@ import ch.epfl.rechor.timetable.mapped.FileTimeTable;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,17 +12,13 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public class MyJourneyExtractorTest {
-    private Profile readProfile(TimeTable timeTable,
-                                LocalDate date,
-                                int arrStationId) throws IOException {
-        Path path =
-                Path.of("profile_" + date + "_" + arrStationId + ".txt");
+    private Profile readProfile(
+            TimeTable timeTable, LocalDate date, int arrStationId
+    ) throws IOException {
+        Path path = Path.of("profile_" + date + "_" + arrStationId + ".txt");
         try (BufferedReader r = Files.newBufferedReader(path)) {
-            Profile.Builder profileB =
-                    new Profile.Builder(timeTable, date, arrStationId);
+            Profile.Builder profileB = new Profile.Builder(timeTable, date, arrStationId);
             int stationId = -1;
             String line;
             while ((line = r.readLine()) != null) {

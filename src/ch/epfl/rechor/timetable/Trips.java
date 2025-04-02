@@ -1,7 +1,7 @@
 package ch.epfl.rechor.timetable;
 
-public interface Trips extends Indexed{
-    public abstract int routeId(int id) throws IndexOutOfBoundsException;
+public interface Trips extends Indexed {
+    int routeId(int id) throws IndexOutOfBoundsException;
 
-    public abstract String destination(int id) throws IndexOutOfBoundsException;
+    String destination(int id) throws IndexOutOfBoundsException;
 }

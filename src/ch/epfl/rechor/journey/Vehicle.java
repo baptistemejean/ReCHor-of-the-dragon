@@ -16,7 +16,6 @@ public enum Vehicle {
 
     /**
      * A constant list containing all vehicle types.
-     * Currently, this list is empty.
      */
     public static final List<Vehicle> ALL = List.of(Vehicle.values());
 }

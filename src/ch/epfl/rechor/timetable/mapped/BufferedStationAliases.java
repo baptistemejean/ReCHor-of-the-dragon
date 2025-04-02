@@ -1,12 +1,13 @@
 package ch.epfl.rechor.timetable.mapped;
 
 import ch.epfl.rechor.timetable.StationAliases;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Implementation of the {@link StationAliases} interface that accesses flattened data
- * in a {@link ByteBuffer}.
+ * Implementation of the {@link StationAliases} interface that accesses flattened data in a
+ * {@link ByteBuffer}.
  */
 public final class BufferedStationAliases implements StationAliases {
     // Constants for field indices
@@ -23,11 +24,11 @@ public final class BufferedStationAliases implements StationAliases {
     private final StructuredBuffer buffer;
 
     /**
-     * Constructs a BufferedStationAliases from a string table and a buffer
-     * containing the flattened data.
+     * Constructs a BufferedStationAliases from a string table and a buffer containing the flattened
+     * data.
      *
      * @param stringTable The table of strings referenced by the flattened data
-     * @param buffer The buffer containing the flattened data
+     * @param buffer      The buffer containing the flattened data
      */
     public BufferedStationAliases(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = stringTable;

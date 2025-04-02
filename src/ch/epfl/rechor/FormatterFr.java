@@ -18,7 +18,8 @@ public final class FormatterFr {
      * Private constructor to prevent instantiation.
      */
     private FormatterFr() {
-        throw new UnsupportedOperationException("FormatterFr is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException(
+                "FormatterFr is a utility class and cannot be instantiated");
     }
 
     /**
@@ -30,7 +31,7 @@ public final class FormatterFr {
     public static String formatDuration(Duration duration) {
         long hours = duration.toHours();
         long minutes = duration.toMinutes() - 60 * hours;
-        if (hours > 0 ){
+        if (hours > 0) {
             return hours + " h " + minutes + " min";
         } else {
             return minutes + " min";
@@ -44,14 +45,7 @@ public final class FormatterFr {
      * @return A formatted time string.
      */
     public static String formatTime(LocalDateTime dateTime) {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-//                .appendValue(ChronoField.DAY_OF_MONTH, 2)
-//                .appendLiteral("/")
-//                .appendValue(ChronoField.MONTH_OF_YEAR, 2)
-//                .appendLiteral("/")
-//                .appendValue(ChronoField.YEAR, 4)
-//                .appendLiteral(" - ")
-                .appendValue(ChronoField.HOUR_OF_DAY)
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendValue(ChronoField.HOUR_OF_DAY)
                 .appendLiteral('h')
                 .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
                 .toFormatter();
@@ -64,11 +58,13 @@ public final class FormatterFr {
      * @param stop The stop to format the platform name for.
      * @return A formatted platform name, or an empty string if not applicable.
      */
-    public static String formatPlatformName(Stop stop){
-        if (isStation(stop)){
+    public static String formatPlatformName(Stop stop) {
+        if (isStation(stop)) {
             return "";
         }
-        return stop.platformName().matches("^\\d.*") ? "voie " + stop.platformName() : "quai " + stop.platformName();
+        return stop.platformName().matches("^\\d.*")
+               ? "voie " + stop.platformName()
+               : "quai " + stop.platformName();
     }
 
     /**
@@ -107,9 +103,8 @@ public final class FormatterFr {
         String arrPlatform = formatPlatformName(leg.arrStop());
 
         return depTime + " " + depStopName +
-                (depPlatform.isEmpty() ? "" : " (" + depPlatform + ")") +
-                " → " + arrStopName + " (arr. " + arrTime +
-                (arrPlatform.isEmpty() ? "" : " " + arrPlatform) + ")";
+               (depPlatform.isEmpty() ? "" : " (" + depPlatform + ")") + " → " + arrStopName +
+               " (arr. " + arrTime + (arrPlatform.isEmpty() ? "" : " " + arrPlatform) + ")";
     }
 
     /**

@@ -4,20 +4,42 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.LongConsumer;
 
+/**
+ * Represents an immutable Pareto frontier of optimization criteria.
+ * <p>
+ * A Pareto frontier contains a set of non-dominated tuples, where each tuple represents a
+ * combination of criteria (arrival time, changes, and optional payload). A tuple is considered
+ * non-dominated if no other tuple is better in all criteria simultaneously.
+ * <p>
+ * This class provides functionality to create, query, and manipulate Pareto frontiers for
+ * multi-criteria optimization problems, particularly in the context of journey planning.
+ *
+ * @see PackedCriteria
+ */
 public class ParetoFront {
-    // Static empty ParetoFront instance
+    /**
+     * A pre-defined empty Pareto frontier instance.
+     */
     public static final ParetoFront EMPTY = new ParetoFront(new long[0]);
 
-    // Private array to store packed criteria
+    /**
+     * The array containing the packed criteria tuples that form this Pareto frontier. Each long
+     * value represents a packed set of criteria according to {@link PackedCriteria}.
+     */
     private final long[] packedCriteria;
 
-    // Private constructor that takes packed tuples
+    /**
+     * Constructs a new Pareto frontier from an array of packed tuples.
+     *
+     * @param tuples the array of packed criteria tuples
+     */
     ParetoFront(long[] tuples) {
         this.packedCriteria = tuples;
     }
 
     /**
-     * Returns the size of the Pareto frontier
+     * Returns the size of the Pareto frontier.
+     *
      * @return number of tuples in the frontier
      */
     public int size() {
@@ -25,7 +47,8 @@ public class ParetoFront {
     }
 
     /**
-     * Retrieves the packed criteria for given arrival time and changes
+     * Retrieves the packed criteria for given arrival time and changes.
+     *
      * @param arrMins arrival time in minutes
      * @param changes number of changes
      * @return packed tuple matching the criteria
@@ -42,15 +65,23 @@ public class ParetoFront {
             }
         }
 
-        throw new NoSuchElementException("No tuple found with arrival time " + arrMins + " and changes " + changes);
+        throw new NoSuchElementException(
+                "No tuple found with arrival time " + arrMins + " and changes " + changes);
     }
 
+    /**
+     * Checks if this Pareto frontier equals another one.
+     *
+     * @param obj the other Pareto frontier to compare with
+     * @return true if both frontiers contain the same tuples, false otherwise
+     */
     public boolean equals(ParetoFront obj) {
         return Arrays.equals(obj.packedCriteria, this.packedCriteria);
     }
 
     /**
-     * Applies the given action to each tuple in the frontier
+     * Applies the given action to each tuple in the frontier.
+     *
      * @param action consumer to apply to each packed tuple
      */
     public void forEach(LongConsumer action) {
@@ -60,7 +91,11 @@ public class ParetoFront {
     }
 
     /**
-     * Provides a readable string representation of the Pareto frontier
+     * Provides a readable string representation of the Pareto frontier.
+     * <p>
+     * The representation includes all tuples with their unpacked criteria values and the total size
+     * of the frontier.
+     *
      * @return string representation of the frontier
      */
     @Override
@@ -72,9 +107,18 @@ public class ParetoFront {
             int payload = PackedCriteria.payload(packed);
             if (PackedCriteria.hasDepMins(packed)) {
                 int depMins = PackedCriteria.depMins(packed);
-                sb.append(String.format("  {arrMins: %d, depMins: %d, changes: %d, payload: %d}\n", arrMins, depMins, changes, payload));
+                sb.append(String.format("  {arrMins: %d, depMins: %d, changes: %d, payload: %d}\n",
+                        arrMins,
+                        depMins,
+                        changes,
+                        payload
+                ));
             } else {
-                sb.append(String.format("  {arrMins: %d, changes: %d, payload: %d}\n", arrMins, changes, payload));
+                sb.append(String.format("  {arrMins: %d, changes: %d, payload: %d}\n",
+                        arrMins,
+                        changes,
+                        payload
+                ));
             }
         }
         sb.append(String.format("  {size: %d}\n", size()));
@@ -83,17 +127,22 @@ public class ParetoFront {
     }
 
     /**
-     * Builder inner class for constructing ParetoFront instances
+     * Builder class for constructing ParetoFront instances.
+     * <p>
+     * This builder maintains a mutable collection of non-dominated tuples and provides methods to
+     * add new tuples while preserving the Pareto optimality of the set.
      */
     public static class Builder {
-        // Internal array to store packed tuples during construction
+        /**
+         * Default initial capacity for the tuples array.
+         */
+        private final static int DEFAULT_CAPACITY = 3;
+
         private long[] tuples;
         private int size;
 
-        private final static int DEFAULT_CAPACITY = 3;
-
         /**
-         * Default constructor creating an empty builder
+         * Creates an empty builder with default capacity.
          */
         public Builder() {
             this.tuples = new long[DEFAULT_CAPACITY];
@@ -101,7 +150,8 @@ public class ParetoFront {
         }
 
         /**
-         * Copy constructor
+         * Creates a new builder by copying another one.
+         *
          * @param that builder to copy
          */
         public Builder(Builder that) {
@@ -110,16 +160,18 @@ public class ParetoFront {
         }
 
         /**
-         * Checks if the builder's frontier is empty
-         * @return true if no tuples, false otherwise
+         * Checks if the builder's frontier is empty.
+         *
+         * @return true if no tuples are present, false otherwise
          */
         public boolean isEmpty() {
             return size == 0;
         }
 
         /**
-         * Clears all tuples from the builder
-         * @return this builder
+         * Removes all tuples from the builder.
+         *
+         * @return this builder instance for method chaining
          */
         public Builder clear() {
             this.tuples = new long[DEFAULT_CAPACITY];
@@ -128,9 +180,12 @@ public class ParetoFront {
         }
 
         /**
-         * Adds a packed tuple to the frontier if it's not dominated
+         * Adds a packed tuple to the frontier if it's not dominated by any existing tuple.
+         * <p>
+         * Also removes any existing tuples that are dominated by the new tuple.
+         *
          * @param packedTuple tuple to add
-         * @return this builder
+         * @return this builder instance for method chaining
          */
         public Builder add(long packedTuple) {
             // Ensure dominance and remove dominated tuples
@@ -155,12 +210,17 @@ public class ParetoFront {
 
             if (shouldAdd) {
                 // Resize if needed
-                 if (size == tuples.length) {
-                     tuples = Arrays.copyOf(tuples, tuples.length * 2);
-                 }
+                if (size == tuples.length) {
+                    tuples = Arrays.copyOf(tuples, tuples.length * 2);
+                }
 
                 if (size != 0) {
-                    System.arraycopy(tuples, destPos, tuples, destPos + 1, tuples.length - destPos - 1);
+                    System.arraycopy(tuples,
+                            destPos,
+                            tuples,
+                            destPos + 1,
+                            tuples.length - destPos - 1
+                    );
                 }
 
                 tuples[destPos] = packedTuple;
@@ -171,22 +231,25 @@ public class ParetoFront {
         }
 
         /**
-         * Adds a tuple with arrival time, changes, and payload
+         * Adds a tuple with specified arrival time, changes, and payload to the frontier.
+         * <p>
+         * The tuple will be packed using {@link PackedCriteria#pack} before being added.
+         *
          * @param arrMins arrival time in minutes
          * @param changes number of changes
-         * @param payload additional payload
-         * @return this builder
+         * @param payload additional payload information
+         * @return this builder instance for method chaining
          */
         public Builder add(int arrMins, int changes, int payload) {
-            // Pack arrival time and changes into a single long
             long packedTuple = PackedCriteria.pack(arrMins, changes, payload);
             return add(packedTuple);
         }
 
         /**
-         * Adds all tuples from another builder
+         * Adds all non-dominated tuples from another builder to this one.
+         *
          * @param that builder to add tuples from
-         * @return this builder
+         * @return this builder instance for method chaining
          */
         public Builder addAll(Builder that) {
             for (int i = 0; i < that.size; i++) {
@@ -196,16 +259,20 @@ public class ParetoFront {
         }
 
         /**
-         * Checks if all tuples in another builder are fully dominated
-         * @param that builder to check
-         * @param depMins departure time in minutes
-         * @return true if all tuples are dominated, false otherwise
+         * Checks if all tuples in another builder are fully dominated by tuples in this builder,
+         * when considering a specific departure time.
+         *
+         * @param that    builder to check against
+         * @param depMins departure time in minutes to use for comparison
+         * @return true if all tuples in the other builder are dominated, false otherwise
          */
         public boolean fullyDominates(Builder that, int depMins) {
             for (int i = 0; i < that.size; i++) {
                 boolean dominated = false;
                 for (int j = 0; j < this.size; j++) {
-                    if (PackedCriteria.dominatesOrIsEqual(this.tuples[j], PackedCriteria.withDepMins(that.tuples[i], depMins))) {
+                    if (PackedCriteria.dominatesOrIsEqual(this.tuples[j],
+                            PackedCriteria.withDepMins(that.tuples[i], depMins)
+                    )) {
                         dominated = true;
                         break;
                     }
@@ -217,20 +284,9 @@ public class ParetoFront {
             return true;
         }
 
-        /*
-        var b1 = new ParetoFront.Builder();
-        add(b1, 50, 60, 5, 1);
-        add(b1, 50, 65, 4, 2);
-        add(b1, 50, 70, 3, 3);
-
-        var b2 = new ParetoFront.Builder();
-        b2.add(60, 5, 1);
-        b2.add(65, 4, 2);
-        b2.add(70, 3, 3);
-        */
-
         /**
-         * Applies the given action to each tuple
+         * Applies the given action to each tuple in the builder.
+         *
          * @param action consumer to apply to each packed tuple
          */
         public void forEach(LongConsumer action) {
@@ -240,18 +296,32 @@ public class ParetoFront {
         }
 
         /**
-         * Builds and returns an immutable ParetoFront
-         * @return constructed ParetoFront
+         * Builds and returns an immutable ParetoFront instance.
+         * <p>
+         * The returned Pareto frontier contains a copy of the tuples in this builder.
+         *
+         * @return a new immutable ParetoFront instance
          */
         public ParetoFront build() {
-            // Create a copy to ensure immutability
             return new ParetoFront(Arrays.copyOf(tuples, size));
         }
 
+        /**
+         * Checks if this builder equals another one.
+         *
+         * @param obj the other builder to compare with
+         * @return true if both builders contain the same tuples, false otherwise
+         */
         public boolean equals(Builder obj) {
             return Arrays.equals(obj.tuples, this.tuples) && obj.size == this.size;
         }
 
+        /**
+         * Returns a string representation of this builder by building a ParetoFront and using its
+         * string representation.
+         *
+         * @return string representation of the builder's content
+         */
         @Override
         public String toString() {
             return this.build().toString();

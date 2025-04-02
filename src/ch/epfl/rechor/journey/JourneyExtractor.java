@@ -1,7 +1,10 @@
 package ch.epfl.rechor.journey;
 
 import ch.epfl.rechor.PackedRange;
-import ch.epfl.rechor.timetable.*;
+import ch.epfl.rechor.timetable.Connections;
+import ch.epfl.rechor.timetable.Routes;
+import ch.epfl.rechor.timetable.Stations;
+import ch.epfl.rechor.timetable.TimeTable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,17 +15,21 @@ import java.util.List;
 
 /**
  * Utility class for extracting optimal journeys from a travel profile.
- * This class provides methods to extract and process journey information
- * based on Pareto frontier criteria.
+ * <p>
+ * This class provides methods to extract and process journey information based on Pareto frontier
+ * criteria.
  */
 public final class JourneyExtractor {
     // Private constructor to prevent instantiation of utility class
-    private JourneyExtractor() {}
+    private JourneyExtractor() {
+        throw new UnsupportedOperationException(
+                "JourneyExtractor is a utility class and cannot be instantiated");
+    }
 
     /**
      * Extracts all optimal journeys for a given profile and departure station.
      *
-     * @param profile Profile containing Pareto frontier and connection information
+     * @param profile      Profile containing Pareto frontier and connection information
      * @param depStationId Departure station identifier
      * @return Sorted list of journeys, ordered by departure and arrival times
      */
@@ -37,10 +44,8 @@ public final class JourneyExtractor {
         });
 
         // Sort journeys by departure time, then by arrival time
-        extractedJourneys.sort(Comparator
-                .comparing(Journey::depTime)
-                .thenComparing(Journey::arrTime)
-        );
+        extractedJourneys.sort(Comparator.comparing(Journey::depTime)
+                .thenComparing(Journey::arrTime));
 
         return extractedJourneys;
     }
@@ -48,15 +53,13 @@ public final class JourneyExtractor {
     /**
      * Extracts journey legs from a specific Pareto frontier criteria.
      *
-     * @param profile Travel profile containing timetable and connection data
-     * @param depStationId Initial departure station identifier
+     * @param profile         Profile containing Pareto frontier and connection information
+     * @param depStationId    Initial departure station identifier
      * @param initialCriteria Pareto frontier criteria for journey extraction
      * @return List of journey legs representing the optimal route
      */
     private static List<Journey.Leg> extractLegsFromCriteria(
-            Profile profile,
-            int depStationId,
-            long initialCriteria
+            Profile profile, int depStationId, long initialCriteria
     ) {
         TimeTable timeTable = profile.timeTable();
         Connections connections = profile.connections();
@@ -72,10 +75,18 @@ public final class JourneyExtractor {
 
         // Initial foot leg if needed
         if (timeTable.stationId(connectionDepStopId) != currentStopId) {
-            addFootLeg(connections.depMins(connectionId), false, currentStopId, connectionDepStopId, timeTable, profile, legs);
+            addFootLeg(connections.depMins(connectionId),
+                    false,
+                    currentStopId,
+                    connectionDepStopId,
+                    timeTable,
+                    profile,
+                    legs
+            );
         }
 
-        for (int remainingChanges = PackedCriteria.changes(initialCriteria); remainingChanges >= 0; remainingChanges--) {
+        for (int remainingChanges = PackedCriteria.changes(initialCriteria);
+             remainingChanges >= 0; remainingChanges--) {
             ParetoFront paretoFront = profile.forStation(timeTable.stationId(currentStopId));
             long currentCriteria = paretoFront.get(arrMins, remainingChanges);
 
@@ -86,7 +97,14 @@ public final class JourneyExtractor {
 
             // Add foot leg if previous leg was a transport leg
             if (!legs.isEmpty() && legs.getLast() instanceof Journey.Leg.Transport) {
-                addFootLeg(currentArrMins, true, currentStopId, connectionDepStopId, timeTable, profile, legs);
+                addFootLeg(currentArrMins,
+                        true,
+                        currentStopId,
+                        connectionDepStopId,
+                        timeTable,
+                        profile,
+                        legs
+                );
             }
 
             // Add transport leg
@@ -99,7 +117,14 @@ public final class JourneyExtractor {
 
         // Final foot leg if needed
         if (timeTable.stationId(currentStopId) != profile.arrStationId()) {
-            addFootLeg(currentArrMins, true, currentStopId, profile.arrStationId(), timeTable, profile, legs);
+            addFootLeg(currentArrMins,
+                    true,
+                    currentStopId,
+                    profile.arrStationId(),
+                    timeTable,
+                    profile,
+                    legs
+            );
         }
 
         return legs;
@@ -108,11 +133,11 @@ public final class JourneyExtractor {
     /**
      * Adds a transport leg from connection and profile information.
      *
-     * @param profile Travel profile
-     * @param timeTable Timetable containing station and route details
+     * @param profile      Travel profile
+     * @param timeTable    Timetable containing station and route details
      * @param connectionId Current connection identifier
-     * @param numStops Number of intermediate stops
-     * @param legs List of journey legs to modify
+     * @param numStops     Number of intermediate stops
+     * @param legs         List of journey legs to modify
      * @return connectionId after changes
      */
     private static int addTransportLeg(
@@ -134,22 +159,25 @@ public final class JourneyExtractor {
         List<Journey.Leg.IntermediateStop> intermediateStops = new ArrayList<>();
 
         for (int i = 0; i < numStops; i++) {
-            LocalDateTime intermediateStopArrTime = dateTimeFromMins(
-                    connections.arrMins(connectionId), profile.date()
-            );
+            // The intermediate stop arrival time is the arrival time of the previous connection
+            int intermediateStopArrMins = connections.arrMins(connectionId);
+
             connectionId = connections.nextConnectionId(connectionId);
 
             intermediateStops.add(new Journey.Leg.IntermediateStop(
                     stopFromStopId(connections.depStopId(connectionId), timeTable, stations),
-                    intermediateStopArrTime,
+                    dateTimeFromMins(intermediateStopArrMins, profile.date()),
                     dateTimeFromMins(connections.depMins(connectionId), profile.date())
             ));
         }
 
+        // Final connection arrival stop 
         int arrStopId = connections.arrStopId(connectionId);
 
-        legs.add(new Journey.Leg.Transport(
-                stopFromStopId(depStopId, timeTable, stations),
+        Journey.Leg.Transport transportLeg = new Journey.Leg.Transport(stopFromStopId(depStopId,
+                timeTable,
+                stations
+        ),
                 dateTimeFromMins(initialDepMins, profile.date()),
                 stopFromStopId(arrStopId, timeTable, stations),
                 dateTimeFromMins(connections.arrMins(connectionId), profile.date()),
@@ -157,7 +185,9 @@ public final class JourneyExtractor {
                 routes.vehicle(profile.trips().routeId(tripId)),
                 routes.name(profile.trips().routeId(tripId)),
                 profile.trips().destination(tripId)
-        ));
+        );
+
+        legs.add(transportLeg);
 
         return connectionId;
     }
@@ -165,15 +195,14 @@ public final class JourneyExtractor {
     /**
      * Creates a Stop object from a stop identifier.
      *
-     * @param stopId Stop identifier
+     * @param stopId    Stop identifier
      * @param timeTable Timetable for station information
-     * @param stations Station data
+     * @param stations  Station data
      * @return Stop with detailed station information
      */
     private static Stop stopFromStopId(int stopId, TimeTable timeTable, Stations stations) {
         int stationId = timeTable.stationId(stopId);
-        return new Stop(
-                stations.name(stationId),
+        return new Stop(stations.name(stationId),
                 timeTable.platformName(stopId),
                 stations.longitude(stationId),
                 stations.latitude(stationId)
@@ -194,13 +223,13 @@ public final class JourneyExtractor {
     /**
      * Adds a foot leg between two stops when a transfer is possible.
      *
-     * @param mins Minutes (could be departure or arrival)
+     * @param mins      Minutes (could be departure or arrival)
      * @param isDepMins Whether the minutes given above describe departure or arrival times
      * @param depStopId Departure stop identifier
      * @param arrStopId Arrival stop identifier
      * @param timeTable Timetable for transfer information
-     * @param profile Travel profile
-     * @param legs List of journey legs to modify
+     * @param profile   Travel profile
+     * @param legs      List of journey legs to modify
      */
     private static void addFootLeg(
             int mins,
@@ -214,9 +243,12 @@ public final class JourneyExtractor {
         int depStationId = timeTable.stationId(depStopId);
         int arrStationId = timeTable.stationId(arrStopId);
 
+        // Find the right transfer from the transfer buffer
         int transferRange = timeTable.transfers().arrivingAt(arrStationId);
-        for (int i = PackedRange.startInclusive(transferRange); i < PackedRange.endExclusive(transferRange); ++i) {
+        for (int i = PackedRange.startInclusive(transferRange);
+             i < PackedRange.endExclusive(transferRange); ++i) {
             if (timeTable.transfers().depStationId(i) == depStationId) {
+                // Computing the right arrival and departure times based on the given information
                 int depMins;
                 int arrMins;
                 if (isDepMins) {
@@ -227,8 +259,11 @@ public final class JourneyExtractor {
                     arrMins = mins;
                 }
 
-                legs.add(new Journey.Leg.Foot(
-                        stopFromStopId(depStopId, timeTable, timeTable.stations()),
+                // Add the foot leg using the right transfer data
+                legs.add(new Journey.Leg.Foot(stopFromStopId(depStopId,
+                        timeTable,
+                        timeTable.stations()
+                ),
                         dateTimeFromMins(depMins, profile.date()),
                         stopFromStopId(arrStopId, timeTable, timeTable.stations()),
                         dateTimeFromMins(arrMins, profile.date())

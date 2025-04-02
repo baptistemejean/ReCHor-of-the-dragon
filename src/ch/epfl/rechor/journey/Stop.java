@@ -5,12 +5,13 @@ import ch.epfl.rechor.Preconditions;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Represents a stop in a journey, identified by its name, platform name, and geographical coordinates.
+ * Represents a stop in a journey, identified by its name, platform name, and geographical
+ * coordinates.
  *
- * @param name        The name of the stop, must not be null.
+ * @param name         The name of the stop, must not be null.
  * @param platformName The platform name associated with the stop (can be empty or null).
- * @param longitude   The longitude of the stop, must be within [-180, 180].
- * @param latitude    The latitude of the stop, must be within [-90, 90].
+ * @param longitude    The longitude of the stop, must be within [-180, 180].
+ * @param latitude     The latitude of the stop, must be within [-90, 90].
  */
 public record Stop(String name, String platformName, double longitude, double latitude) {
 
@@ -18,8 +19,8 @@ public record Stop(String name, String platformName, double longitude, double la
      * Constructor that validates the input parameters.
      *
      * @throws NullPointerException     if the name is null.
-     * @throws IllegalArgumentException if longitude is out of range [-180, 180]
-     *                                  or latitude is out of range [-90, 90].
+     * @throws IllegalArgumentException if longitude is out of range [-180, 180] or latitude is out
+     *                                  of range [-90, 90].
      */
     public Stop {
         requireNonNull(name, "Stop name cannot be null");

@@ -13,31 +13,21 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.List;
 
-import ch.epfl.rechor.timetable.Platforms;
-import ch.epfl.rechor.timetable.Routes;
-import ch.epfl.rechor.timetable.StationAliases;
-import ch.epfl.rechor.timetable.Stations;
-import ch.epfl.rechor.timetable.TimeTable;
-import ch.epfl.rechor.timetable.Transfers;
-
 /**
- * Represents a public transport timetable whose data are stored in files, then mapped to the memory.
- * @param directory the path to the directory containing the timetable data files
- * @param stringTable the table of strings
- * @param stations the stations
+ * Represents a public transport timetable whose data are stored in files, then mapped to the
+ * memory.
+ *
+ * @param directory      the path to the directory containing the timetable data files
+ * @param stringTable    the table of strings
+ * @param stations       the stations
  * @param stationAliases the alternative names of stations
- * @param platforms the platforms
- * @param routes the routes
- * @param transfers the transfers
+ * @param platforms      the platforms
+ * @param routes         the routes
+ * @param transfers      the transfers
  */
-public record FileTimeTable(
-        Path directory,
-        List<String> stringTable,
-        Stations stations,
-        StationAliases stationAliases,
-        Platforms platforms,
-        Routes routes,
-        Transfers transfers) implements TimeTable {
+public record FileTimeTable(Path directory, List<String> stringTable, Stations stations,
+                            StationAliases stationAliases, Platforms platforms, Routes routes,
+                            Transfers transfers) implements TimeTable {
 
     /**
      * Creates a new FileTimeTable instance from the timetable data in the given directory.
@@ -49,7 +39,9 @@ public record FileTimeTable(
     public static TimeTable in(Path directory) throws IOException {
         // Read the string table
         Path stringsPath = directory.resolve("strings.txt");
-        List<String> stringTable = List.copyOf(Files.readAllLines(stringsPath, StandardCharsets.ISO_8859_1));
+        List<String> stringTable = List.copyOf(Files.readAllLines(stringsPath,
+                StandardCharsets.ISO_8859_1
+        ));
 
         // Map the station data
         ByteBuffer stationsBuffer = mapFile(directory.resolve("stations.bin"));
@@ -57,7 +49,9 @@ public record FileTimeTable(
 
         // Map the station aliases data
         ByteBuffer stationAliasesBuffer = mapFile(directory.resolve("station-aliases.bin"));
-        StationAliases stationAliases = new BufferedStationAliases(stringTable, stationAliasesBuffer);
+        StationAliases stationAliases = new BufferedStationAliases(stringTable,
+                stationAliasesBuffer
+        );
 
         // Map the platforms data
         ByteBuffer platformsBuffer = mapFile(directory.resolve("platforms.bin"));
@@ -71,26 +65,41 @@ public record FileTimeTable(
         ByteBuffer transfersBuffer = mapFile(directory.resolve("transfers.bin"));
         Transfers transfers = new BufferedTransfers(transfersBuffer);
 
-        return new FileTimeTable(
-                directory,
+        return new FileTimeTable(directory,
                 stringTable,
                 stations,
                 stationAliases,
                 platforms,
                 routes,
-                transfers);
+                transfers
+        );
     }
 
+    /**
+     * Maps the file with the given path to the memory for efficient access.
+     *
+     * @param path the file path
+     * @return the buffer containing the mapped data
+     * @throws IOException in case of I/O error
+     */
     private static ByteBuffer mapFile(Path path) throws IOException {
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
             return channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
         }
     }
 
+    /**
+     * Fetches the connections for a given date from the corresponding directory.
+     *
+     * @param date the date to fetch the connections for
+     * @return a {@link BufferedConnections} object containing the flattened connections
+     * @throws UncheckedIOException in case of I/O error
+     */
     @Override
     public Connections connectionsFor(LocalDate date) {
         Path connectionsPath = directory.resolve(date.toString()).resolve("connections.bin");
-        Path connectionsSuccPath = directory.resolve(date.toString()).resolve("connections-succ.bin");
+        Path connectionsSuccPath = directory.resolve(date.toString())
+                .resolve("connections-succ.bin");
 
         try {
             ByteBuffer connectionsBuffer = mapFile(connectionsPath);
@@ -101,6 +110,13 @@ public record FileTimeTable(
         }
     }
 
+    /**
+     * Fetches the trips for a given date from the corresponding directory.
+     *
+     * @param date the date to fetch the trips for
+     * @return a {@link BufferedTrips} object containing the flattened connections
+     * @throws UncheckedIOException in case of I/O error
+     */
     @Override
     public Trips tripsFor(LocalDate date) {
         Path tripsPath = directory.resolve(date.toString()).resolve("trips.bin");

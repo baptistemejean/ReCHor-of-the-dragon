@@ -11,26 +11,23 @@ import java.util.List;
 
 
 /**
- * Represents a profile, which contains the Pareto frontier for all stations for a given
- * destination and travel date.
+ * Represents a profile, which contains the Pareto frontier for all stations for a given destination
+ * and travel date.
  *
- * @param timeTable the timetable corresponding to the profile
- * @param date the date corresponding to the profile
+ * @param timeTable    the timetable corresponding to the profile
+ * @param date         the date corresponding to the profile
  * @param arrStationId the index of the arrival station corresponding to the profile
- * @param stationFront the table of Pareto frontiers for all stations, containing at a given
- *                     index the frontier of the station with the same index
+ * @param stationFront the table of Pareto frontiers for all stations, containing at a given index
+ *                     the frontier of the station with the same index
  */
-public record Profile(
-        TimeTable timeTable,
-        LocalDate date,
-        int arrStationId,
-        List<ParetoFront> stationFront) {
+public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
+                      List<ParetoFront> stationFront) {
 
     /**
      * Constructs a profile with the given parameters.
      *
-     * @param timeTable the timetable corresponding to the profile
-     * @param date the date corresponding to the profile
+     * @param timeTable    the timetable corresponding to the profile
+     * @param date         the date corresponding to the profile
      * @param arrStationId the index of the arrival station
      * @param stationFront the table of Pareto fronts for all stations
      */
@@ -68,9 +65,8 @@ public record Profile(
     }
 
     /**
-     * Builder for Profile.
-     * Represents an augmented profile (with Pareto frontiers for both stations and trips)
-     * under construction.
+     * Builder for Profile. Represents an augmented profile (with Pareto frontiers for both stations
+     * and trips) under construction.
      */
     public static final class Builder {
         private final TimeTable timeTable;
@@ -83,8 +79,8 @@ public record Profile(
         /**
          * Constructs a profile builder for the given timetable, date, and arrival station.
          *
-         * @param timeTable the timetable
-         * @param date the date
+         * @param timeTable    the timetable
+         * @param date         the date
          * @param arrStationId the index of the arrival station
          */
         public Builder(TimeTable timeTable, LocalDate date, int arrStationId) {
@@ -92,8 +88,10 @@ public record Profile(
             this.date = date;
             this.arrStationId = arrStationId;
 
-            this.stationFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.stations().size(), null));
-            this.tripFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.tripsFor(date).size(), null));
+            this.stationFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.stations()
+                    .size(), null));
+            this.tripFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.tripsFor(date)
+                    .size(), null));
         }
 
         /**
@@ -111,10 +109,12 @@ public record Profile(
          * Associates the given Pareto frontier builder with the station of the given index.
          *
          * @param stationId the index of the station
-         * @param builder the Pareto frontier builder
+         * @param builder   the Pareto frontier builder
          * @throws IndexOutOfBoundsException if the index is invalid
          */
-        public void setForStation(int stationId, ParetoFront.Builder builder) throws IndexOutOfBoundsException {
+        public void setForStation(
+                int stationId, ParetoFront.Builder builder
+        ) throws IndexOutOfBoundsException {
             stationFrontBuilders.set(stationId, builder);
         }
 
@@ -132,11 +132,13 @@ public record Profile(
         /**
          * Associates the given Pareto frontier builder with the trip of the given index.
          *
-         * @param tripId the index of the trip
+         * @param tripId  the index of the trip
          * @param builder the Pareto frontier builder
          * @throws IndexOutOfBoundsException if the index is invalid
          */
-        public void setForTrip(int tripId, ParetoFront.Builder builder) throws IndexOutOfBoundsException {
+        public void setForTrip(
+                int tripId, ParetoFront.Builder builder
+        ) throws IndexOutOfBoundsException {
             tripFrontBuilders.set(tripId, builder);
         }
 
@@ -149,9 +151,7 @@ public record Profile(
             ParetoFront[] stationFronts = new ParetoFront[stationFrontBuilders.size()];
             for (int i = 0; i < stationFrontBuilders.size(); i++) {
                 ParetoFront.Builder builder = stationFrontBuilders.get(i);
-                stationFronts[i] = (builder != null)
-                        ? builder.build()
-                        : ParetoFront.EMPTY;
+                stationFronts[i] = (builder != null) ? builder.build() : ParetoFront.EMPTY;
             }
 
             return new Profile(timeTable, date, arrStationId, List.of(stationFronts));
