@@ -4,6 +4,7 @@ import ch.epfl.rechor.timetable.Connections;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.function.Consumer;
 
 import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.S32;
 import static ch.epfl.rechor.timetable.mapped.Structure.FieldType.U16;
