@@ -1,5 +1,6 @@
 package ch.epfl.rechor.timetable.mapped;
 
+import ch.epfl.rechor.Bits32_24_8;
 import ch.epfl.rechor.timetable.Connections;
 
 import java.nio.ByteBuffer;
@@ -103,7 +104,7 @@ public final class BufferedConnections implements Connections {
     @Override
     public int tripId(int id) {
         int tripPosId = buffer.getS32(TRIP_POS_ID, id);
-        return tripPosId >>> 8; // Extract the trip ID from the upper 24 bits
+        return Bits32_24_8.unpack24(tripPosId); // Extract the trip ID from the upper 24 bits
     }
 
     /**
@@ -116,7 +117,7 @@ public final class BufferedConnections implements Connections {
     @Override
     public int tripPos(int id) {
         int tripPosId = buffer.getS32(TRIP_POS_ID, id);
-        return tripPosId & 0xFF; // Extract the position from the lower 8 bits
+        return Bits32_24_8.unpack8(tripPosId); // Extract the position from the lower 8 bits
     }
 
     /**

@@ -174,7 +174,6 @@ public class ParetoFront {
          * @return this builder instance for method chaining
          */
         public Builder clear() {
-            this.tuples = new long[DEFAULT_CAPACITY];
             this.size = 0;
             return this;
         }

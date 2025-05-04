@@ -38,6 +38,16 @@ public final class IcalBuilder {
     /** Tracks the currently started components to ensure proper nesting. */
     private final ArrayList<Component> startedComponents;
 
+    private static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 4)
+            .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+            .appendValue(ChronoField.DAY_OF_MONTH, 2)
+            .appendLiteral("T")
+            .appendValue(ChronoField.HOUR_OF_DAY, 2)
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+            .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+            .toFormatter();
+
     /**
      * Creates a new empty iCalendar builder.
      */
@@ -76,17 +86,6 @@ public final class IcalBuilder {
      * @return the formatted date-time string
      */
     private static String formatDateTime(LocalDateTime dateTime) {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendValue(
-                        ChronoField.YEAR,
-                        4
-                )
-                .appendValue(ChronoField.MONTH_OF_YEAR, 2)
-                .appendValue(ChronoField.DAY_OF_MONTH, 2)
-                .appendLiteral("T")
-                .appendValue(ChronoField.HOUR_OF_DAY, 2)
-                .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
-                .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
-                .toFormatter();
         return formatter.format(dateTime);
     }
 

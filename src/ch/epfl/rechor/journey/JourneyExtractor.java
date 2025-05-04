@@ -217,7 +217,7 @@ public final class JourneyExtractor {
      * @return Corresponding LocalDateTime
      */
     private static LocalDateTime dateTimeFromMins(int mins, LocalDate date) {
-        return LocalDateTime.of(date, LocalTime.of(mins / 60, mins % 60));
+        return LocalDateTime.of(date, LocalTime.MIDNIGHT.plusMinutes(mins));
     }
 
     /**

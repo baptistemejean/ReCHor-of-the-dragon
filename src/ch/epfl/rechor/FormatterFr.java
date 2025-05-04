@@ -13,7 +13,11 @@ import java.time.temporal.ChronoField;
  * Utility class for formatting various journey-related data into human-readable French text.
  */
 public final class FormatterFr {
-
+    private static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.HOUR_OF_DAY)
+            .appendLiteral('h')
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+            .toFormatter();
     /**
      * Private constructor to prevent instantiation.
      */
@@ -45,10 +49,7 @@ public final class FormatterFr {
      * @return A formatted time string.
      */
     public static String formatTime(LocalDateTime dateTime) {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendValue(ChronoField.HOUR_OF_DAY)
-                .appendLiteral('h')
-                .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
-                .toFormatter();
+
         return formatter.format(dateTime);
     }
 
@@ -84,8 +85,15 @@ public final class FormatterFr {
      * @return A formatted string describing the walking leg.
      */
     public static String formatLeg(Journey.Leg.Foot footLeg) {
-        String type = footLeg.isTransfer() ? "changement" : "trajet à pied";
-        return type + " (" + formatDuration(footLeg.duration()) + ")";
+        StringBuilder builder = new StringBuilder();
+        if (footLeg.isTransfer()) builder.append("changement");
+        else builder.append("trajet à pied");
+        builder
+                .append(" (")
+                .append(formatDuration(footLeg.duration()))
+                .append(")");
+
+        return builder.toString();
     }
 
     /**

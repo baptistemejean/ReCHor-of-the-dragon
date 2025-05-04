@@ -72,8 +72,8 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
         private final TimeTable timeTable;
         private final LocalDate date;
         private final int arrStationId;
-        private List<ParetoFront.Builder> stationFrontBuilders = new ArrayList<>();
-        private List<ParetoFront.Builder> tripFrontBuilders = new ArrayList<>();
+        private ParetoFront.Builder[] stationFrontBuilders;
+        private ParetoFront.Builder[] tripFrontBuilders;
 
 
         /**
@@ -88,10 +88,8 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
             this.date = date;
             this.arrStationId = arrStationId;
 
-            this.stationFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.stations()
-                    .size(), null));
-            this.tripFrontBuilders = new ArrayList<>(Collections.nCopies(timeTable.tripsFor(date)
-                    .size(), null));
+            this.stationFrontBuilders = new ParetoFront.Builder[timeTable.stations().size()];
+            this.tripFrontBuilders = new ParetoFront.Builder[timeTable.tripsFor(date).size()];
         }
 
         /**
@@ -102,7 +100,7 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
          * @throws IndexOutOfBoundsException if the index is invalid
          */
         public ParetoFront.Builder forStation(int stationId) throws IndexOutOfBoundsException {
-            return stationFrontBuilders.get(stationId);
+            return stationFrontBuilders[stationId];
         }
 
         /**
@@ -115,7 +113,7 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
         public void setForStation(
                 int stationId, ParetoFront.Builder builder
         ) throws IndexOutOfBoundsException {
-            stationFrontBuilders.set(stationId, builder);
+            stationFrontBuilders[stationId] = builder;
         }
 
         /**
@@ -126,7 +124,7 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
          * @throws IndexOutOfBoundsException if the index is invalid
          */
         public ParetoFront.Builder forTrip(int tripId) throws IndexOutOfBoundsException {
-            return tripFrontBuilders.get(tripId);
+            return tripFrontBuilders[tripId];
         }
 
         /**
@@ -139,7 +137,7 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
         public void setForTrip(
                 int tripId, ParetoFront.Builder builder
         ) throws IndexOutOfBoundsException {
-            tripFrontBuilders.set(tripId, builder);
+            tripFrontBuilders[tripId] = builder;
         }
 
         /**
@@ -148,9 +146,9 @@ public record Profile(TimeTable timeTable, LocalDate date, int arrStationId,
          * @return the built profile
          */
         public Profile build() {
-            ParetoFront[] stationFronts = new ParetoFront[stationFrontBuilders.size()];
-            for (int i = 0; i < stationFrontBuilders.size(); i++) {
-                ParetoFront.Builder builder = stationFrontBuilders.get(i);
+            ParetoFront[] stationFronts = new ParetoFront[stationFrontBuilders.length];
+            for (int i = 0; i < stationFrontBuilders.length; i++) {
+                ParetoFront.Builder builder = stationFrontBuilders[i];
                 stationFronts[i] = (builder != null) ? builder.build() : ParetoFront.EMPTY;
             }
 
