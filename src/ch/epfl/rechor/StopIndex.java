@@ -33,6 +33,9 @@ public final class StopIndex {
      * @return A list of stop names matching the query, sorted by relevance
      */
     public List<String> stopsMatching(String query, int maxResults) {
+        if (query.isEmpty() || query.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
         // Split the query into sub-queries
         String[] subQueries = query.trim().split("\\s+");
 
