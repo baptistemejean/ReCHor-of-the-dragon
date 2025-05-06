@@ -1,5 +1,6 @@
 package ch.epfl.rechor.journey;
 
+import ch.epfl.rechor.Bits32_24_8;
 import ch.epfl.rechor.PackedRange;
 import ch.epfl.rechor.timetable.Connections;
 import ch.epfl.rechor.timetable.Routes;
@@ -91,8 +92,8 @@ public final class JourneyExtractor {
             long currentCriteria = paretoFront.get(arrMins, remainingChanges);
 
             payload = PackedCriteria.payload(currentCriteria);
-            connectionId = payload >> 8;
-            int numStops = payload & 0xFF;
+            connectionId = Bits32_24_8.unpack24(payload);
+            int numStops = Bits32_24_8.unpack8(payload);
             connectionDepStopId = connections.depStopId(connectionId);
 
             // Add foot leg if previous leg was a transport leg
