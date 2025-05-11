@@ -190,27 +190,49 @@ public class ParetoFront {
             // Ensure dominance and remove dominated tuples
             boolean shouldAdd = true;
             int destPos = 0;
+
+            int relativeDest = 0;
+            int removed = 0;
             for (int i = 0; i < size; i++) {
-                if (packedTuple > tuples[i]) {
+                if (packedTuple >= tuples[i]) {
                     if (PackedCriteria.dominatesOrIsEqual(tuples[i], packedTuple)) {
                         shouldAdd = false;
                         break;
                     }
                     destPos = i + 1;
                 } else {
+//                    if (PackedCriteria.dominatesOrIsEqual(packedTuple, tuples[i])) {
+//                       //  Remove the dominated tuple
+//                        for (int src = 0; src < array.length; src += 1) {
+//                            if (array[src] < 10) continue;
+//                            if (dst != src) array[dst] = array[src];
+//                            dst += 1;
+//                        }
+//                        return dst;
+//
+//                        System.arraycopy(tuples, i + 1, tuples, i, size - i - 1);
+//                        size--;
+//                        i--;
+//                    }
                     if (PackedCriteria.dominatesOrIsEqual(packedTuple, tuples[i])) {
-                        // Remove the dominated tuple
-                        System.arraycopy(tuples, i + 1, tuples, i, size - i - 1);
-                        size--;
-                        i--;
+                        removed++;
+                        continue;
                     }
+
+                    if (relativeDest + destPos != i) tuples[relativeDest + destPos] = tuples[i];
+                    relativeDest++;
                 }
             }
+
+            size -= removed;
 
             if (shouldAdd) {
                 // Resize if needed
                 if (size == tuples.length) {
-                    tuples = Arrays.copyOf(tuples, tuples.length * 2);
+                    int newLength = (int) (tuples.length * 1.5);
+                    long[] newTuples = new long[newLength];
+                    System.arraycopy(tuples, 0, newTuples, 0, tuples.length);
+                    tuples = newTuples;
                 }
 
                 if (size != 0) {
