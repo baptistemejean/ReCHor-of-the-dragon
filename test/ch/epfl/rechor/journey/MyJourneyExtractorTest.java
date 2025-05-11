@@ -3,6 +3,7 @@ package ch.epfl.rechor.journey;
 import ch.epfl.rechor.timetable.TimeTable;
 import ch.epfl.rechor.timetable.mapped.FileTimeTable;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,9 +40,13 @@ public class MyJourneyExtractorTest {
         TimeTable t = FileTimeTable.in(Path.of("timetable"));
         LocalDate date = LocalDate.of(2025, Month.MARCH, 18);
         Profile p = readProfile(t, date, 11486);
+        Router r = new Router(t);
+        Profile gen = r.profile(date, 11486);
         List<Journey> js = JourneyExtractor.journeys(p, 7872);
         String j = JourneyIcalConverter.toIcalendar(js.get(32));
         System.out.println(j);
+//        comp(gen.stationFront(), p.stationFront());
+//        assertEquals(p.stationFront(), gen.stationFront());
     }
 
 }
