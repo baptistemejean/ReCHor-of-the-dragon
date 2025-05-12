@@ -1,15 +1,30 @@
 package ch.epfl.rechor.journey;
 
 import ch.epfl.rechor.Json;
+import ch.epfl.rechor.timetable.CachedTimeTable;
+import ch.epfl.rechor.timetable.Stations;
+import ch.epfl.rechor.timetable.TimeTable;
+import ch.epfl.rechor.timetable.mapped.FileTimeTable;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JourneyGeoJsonConverterTest {
+    private static int stationId(Stations stations, String name) {
+        for (var i = 0; i < stations.size(); i += 1)
+            if (stations.name(i).equals(name)) return i;
+        throw new NoSuchElementException();
+    }
+
     @Test
     void testToGeoJsonWithSingleLeg() {
         // Create stops
@@ -219,4 +234,22 @@ public class JourneyGeoJsonConverterTest {
         // Should have only 2 points since duplicates should be filtered
         assertEquals(2, coordinates.elements().size());
     }
+
+//    @Test
+//    void geoJsonWorksWithExtractedJourneys () throws IOException {
+//        String expected = "{\"coordinates\":[[6.56614,46.5222],[6.56459,46.52459],[6.56655,46.52775],[6.56997,46.53271],[6.57358,46.53772],[6.57852,46.53762],[6.57893,46.53704],[6.60263,46.52669],[6.62909,46.51679],[6.83787,46.54276],[6.91181,46.69351],[7.053,46.61922],[7.06144,46.60562],[7.05969,46.59468],[7.07325,46.58261]],\"type\":\"LineString\"}";
+//
+//        TimeTable timeTable =
+//                new CachedTimeTable(FileTimeTable.in(Path.of("timetable")));
+//        Stations stations = timeTable.stations();
+//        LocalDate date = LocalDate.of(2025, Month.MARCH, 18);
+//        int depStationId = stationId(stations, "Ecublens VD, EPFL");
+//        int arrStationId = stationId(stations, "Gruyères");
+//        Router router = new Router(timeTable);
+//        Profile profile = router.profile(date, arrStationId);
+//        List<Journey> journeys = JourneyExtractor
+//                .journeys(profile, depStationId);
+//
+//        assertEquals(expected, JourneyGeoJsonConverter.toGeoJson(journeys.get(32)).toString());
+//    }
 }

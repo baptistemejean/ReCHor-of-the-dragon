@@ -28,14 +28,14 @@ public class MyRouterTest {
         TimeTable timeTable =
                 new CachedTimeTable(FileTimeTable.in(Path.of("timetable")));
         Stations stations = timeTable.stations();
-        LocalDate date = LocalDate.of(2025, Month.MAY, 11);
-        int depStationId = stationId(stations, "Ecublens VD, EPFL");
-        int arrStationId = stationId(stations, "Gruyères");
+        LocalDate date = LocalDate.of(2025, Month.MARCH, 20);
+        int depStationId = stationId(stations, "Lausanne");
+        int arrStationId = stationId(stations, "Fribourg/Freiburg");
         Router router = new Router(timeTable);
         Profile profile = router.profile(date, arrStationId);
         Journey journey = JourneyExtractor
                 .journeys(profile, depStationId)
-                .get(15);
+                .get(73);
         System.out.println(JourneyIcalConverter.toIcalendar(journey));
 
         double elapsed = (System.nanoTime() - tStart) * 1e-9;

@@ -218,7 +218,10 @@ public final class JourneyExtractor {
      * @return Corresponding LocalDateTime
      */
     private static LocalDateTime dateTimeFromMins(int mins, LocalDate date) {
-        return LocalDateTime.of(date, LocalTime.MIDNIGHT.plusMinutes(mins));
+        // Calculate days to add and remaining minutes
+        int daysToAdd = mins / (24 * 60);
+
+        return LocalDateTime.of(date, LocalTime.MIDNIGHT.plusMinutes(mins)).plusDays(daysToAdd);
     }
 
     /**
