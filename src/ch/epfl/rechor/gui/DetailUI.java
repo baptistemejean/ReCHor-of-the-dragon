@@ -1,5 +1,7 @@
 package ch.epfl.rechor.gui;
 
+import ch.epfl.rechor.FormatterFr;
+import ch.epfl.rechor.Json;
 import ch.epfl.rechor.journey.Journey;
 import ch.epfl.rechor.journey.JourneyGeoJsonConverter;
 import ch.epfl.rechor.journey.JourneyIcalConverter;
@@ -8,13 +10,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import java.awt.Desktop;
 import java.io.IOException;
@@ -31,158 +32,291 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Represents the UI component that displays detailed information about a journey.
- * This class follows the record pattern to ensure immutability of the UI component.
+ * Detailed user interface for displaying journey information.
+ *
+ * This class provides a comprehensive view of a journey, including:
+ * - Step-by-step journey details
+ * - Interactive map and calendar export buttons
+ *
+ * The UI is designed to be responsive and dynamically update
+ * when the journey changes.
  */
 public record DetailUI(Node rootNode) {
+    // Configuration Constants
     private static final String STYLE_SHEET = "detail.css";
-    private static final String MAP_BASE_URL = "https://umap.osm.ch/fr/map/";
-    private static final int SPACING = 10;
+    private static final String MAP_SCHEME = "https";
+    private static final String MAP_AUTHORITY = "umap.osm.ch";
+    private static final String MAP_PATH = "/fr/map";
+    private static final String MAP_QUERY_PARAM = "data";
+
+    // Layout Constants
+    private static final int SPACING = 6;
     private static final int PADDING = 10;
-    private static final int STROKE_WIDTH = 2;
+    private static final int CONNECTION_STROKE_WIDTH = 2;
 
     /**
-     * Represents a pair of circles that should be connected by a line.
-     * This is used to track connections between journey steps.
+     * Represents a pair of connected journey step circles.
+     * Used for drawing connection lines between journey steps.
      */
     private record CirclePair(Circle departure, Circle arrival) {}
 
     /**
-     * A custom GridPane that draws connection lines between journey steps.
-     * It automatically draws lines between pairs of circles when the layout is updated.
+     * Custom GridPane that automatically draws connection lines
+     * between journey step circles.
      */
     private static class StepsGridPane extends GridPane {
-        final List<CirclePair> circleConnections = new ArrayList<>();
+        private final List<CirclePair> circleConnections = new ArrayList<>();
+        private final Pane annotationsPane;
 
-        StepsGridPane() {
+        /**
+         * Constructs a new JourneyStepsGridPane.
+         *
+         * @param annotationsPane Pane for drawing additional annotations
+         */
+        public StepsGridPane(Pane annotationsPane) {
+            super();
+            this.annotationsPane = annotationsPane;
+            configureLayout();
+        }
+
+        /**
+         * Configures the initial layout of the grid pane.
+         */
+        private void configureLayout() {
             setHgap(SPACING);
             setVgap(5);
             setPadding(new Insets(PADDING));
         }
 
+        /**
+         * Adds a pair of connected circles to be drawn.
+         *
+         * @param circlePair The pair of circles to connect
+         */
+        public void addCirclePair(CirclePair circlePair) {
+            circleConnections.add(circlePair);
+        }
+
+        /**
+         * Clears all existing circle connections and grid children.
+         */
+        public void clear() {
+            circleConnections.clear();
+            annotationsPane.getChildren().clear();
+            this.getChildren().clear();
+        }
+
+        /**
+         * Custom layout method to draw connection lines between circles.
+         */
         @Override
         protected void layoutChildren() {
             super.layoutChildren();
 
-            // Remove any existing lines before redrawing
-            getChildren().removeIf(node -> node instanceof Line);
+            // Remove existing connection lines
+            annotationsPane.getChildren().removeIf(node -> node instanceof Line);
 
-            // Create new lines based on circle positions
+            // Redraw connection lines
             for (CirclePair pair : circleConnections) {
-                double startX = pair.departure.getBoundsInParent().getCenterX();
-                double startY = pair.departure.getBoundsInParent().getCenterY();
-                double endX = pair.arrival.getBoundsInParent().getCenterX();
-                double endY = pair.arrival.getBoundsInParent().getCenterY();
-
-                Line line = new Line(startX, startY, endX, endY);
-                line.setStroke(Color.RED);
-                line.setStrokeWidth(STROKE_WIDTH);
-
-                getChildren().add(line);
+                drawConnectionLine(pair);
             }
+        }
+
+        /**
+         * Draws a connection line between two circles.
+         *
+         * @param pair The pair of circles to connect
+         */
+        private void drawConnectionLine(CirclePair pair) {
+            double startX = pair.departure.getBoundsInParent().getCenterX();
+            double startY = pair.departure.getBoundsInParent().getCenterY();
+            double endX = pair.arrival.getBoundsInParent().getCenterX();
+            double endY = pair.arrival.getBoundsInParent().getCenterY();
+
+            Line line = new Line(startX, startY, endX, endY);
+            line.setStroke(Color.RED);
+            line.setStrokeWidth(CONNECTION_STROKE_WIDTH);
+
+            annotationsPane.getChildren().add(line);
         }
     }
 
     /**
      * Creates a new DetailUI instance for the given journey.
      *
-     * @param journeyObservable An observable value containing the journey to display.
-     * @return A new DetailUI instance.
+     * @param journeyObservable An observable value containing the journey to display
+     * @return A new DetailUI instance
      */
     public static DetailUI create(ObservableValue<Journey> journeyObservable) {
-        BorderPane rootPane = new BorderPane();
-        rootPane.getStylesheets().add(STYLE_SHEET);
-        rootPane.setId("detail");
+        // Create the main container
+        StackPane mainContainer = createMainContainer(journeyObservable);
 
-        // Create the "No journey" message
-        StackPane noJourneyPane = createNoJourneyPane();
-
-        // Create the content pane for journey details
-        BorderPane journeyPane = new BorderPane();
-        journeyPane.setVisible(false);
-
-        // Set up the steps display with annotations
-        StepsGridPane stepsGrid = new StepsGridPane();
-
-        ScrollPane scrollPane = new ScrollPane(stepsGrid);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPannable(true);
-        journeyPane.setCenter(scrollPane);
-
-        // Add action buttons
-        HBox buttonsBox = createButtonsBox();
-        Button mapButton = new Button("Carte");
-        Button calendarButton = new Button("Calendrier");
-
-        buttonsBox.getChildren().addAll(mapButton, calendarButton);
-        journeyPane.setBottom(buttonsBox);
-
-        // Add both panes to the root
-        rootPane.getChildren().addAll(noJourneyPane, journeyPane);
-
-        // Initialize with current journey if available
-        Journey currentJourney = journeyObservable.getValue();
-        if (currentJourney != null) {
-            updateJourneyView(currentJourney, stepsGrid, journeyPane, noJourneyPane);
-            configureButtons(mapButton, calendarButton, currentJourney);
-        }
-
-        // Listen for changes to the journey
-        journeyObservable.addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                updateJourneyView(newValue, stepsGrid, journeyPane, noJourneyPane);
-                configureButtons(mapButton, calendarButton, newValue);
-            } else {
-                journeyPane.setVisible(false);
-                noJourneyPane.setVisible(true);
-            }
-        });
+        // Create scrollable root pane
+        ScrollPane rootPane = createRootScrollPane(mainContainer);
 
         return new DetailUI(rootPane);
     }
 
     /**
-     * Creates a pane displaying a message when no journey is selected.
+     * Creates the main container for journey details.
      *
-     * @return A StackPane containing the "no journey" message
+     * @param journeyObservable The observable journey
+     * @return A StackPane containing journey details and controls
      */
-    private static StackPane createNoJourneyPane() {
-        StackPane noJourneyPane = new StackPane();
-        noJourneyPane.setId("no-journey");
-        Label noJourneyLabel = new Label("Aucun voyage");
-        noJourneyPane.getChildren().add(noJourneyLabel);
-        return noJourneyPane;
+    private static StackPane createMainContainer(ObservableValue<Journey> journeyObservable) {
+        StackPane mainContainer = new StackPane();
+
+        // No journey placeholder
+        VBox noJourneyBox = createNoJourneyBox();
+        noJourneyBox.setVisible(false);
+        mainContainer.getChildren().add(noJourneyBox);
+
+        // Journey details container
+        VBox journeyDetailsContainer = new VBox();
+        mainContainer.getChildren().add(journeyDetailsContainer);
+
+        // Steps and annotations container
+        StackPane stepsAndAnnotationsContainer = new StackPane();
+        journeyDetailsContainer.getChildren().add(stepsAndAnnotationsContainer);
+
+        // Action buttons
+        HBox actionButtonsBox = createActionButtonsBox(journeyObservable);
+        journeyDetailsContainer.getChildren().add(actionButtonsBox);
+
+        // Annotations pane
+        Pane annotationsPane = createAnnotationsPane();
+
+        // Steps grid
+        StepsGridPane stepsGridPane = new StepsGridPane(annotationsPane);
+        stepsGridPane.setId("legs");
+
+        // Populate initial journey details
+        populateStepsGrid(journeyObservable.getValue(), stepsGridPane);
+
+        // Add panes to container
+        stepsAndAnnotationsContainer.getChildren().add(annotationsPane);
+        stepsAndAnnotationsContainer.getChildren().add(stepsGridPane);
+
+        // Add listener to update UI when journey changes
+        addJourneyChangeListener(journeyObservable, stepsGridPane, actionButtonsBox);
+
+        return mainContainer;
     }
 
     /**
-     * Creates a HBox for containing action buttons.
+     * Creates a pane for additional annotations.
      *
-     * @return A styled HBox for buttons
+     * @return A Pane for drawing annotations
      */
-    private static HBox createButtonsBox() {
+    private static Pane createAnnotationsPane() {
+        Pane annotationsPane = new Pane();
+        annotationsPane.setId("annotations");
+        return annotationsPane;
+    }
+
+    /**
+     * Creates an HBox with action buttons for the journey.
+     *
+     * @param journeyObservable The observable journey
+     * @return An HBox containing action buttons
+     */
+    private static HBox createActionButtonsBox(ObservableValue<Journey> journeyObservable) {
         HBox buttonsBox = new HBox(SPACING);
+        buttonsBox.setId("buttons");
         buttonsBox.setPadding(new Insets(PADDING));
         buttonsBox.setAlignment(Pos.CENTER);
+
+        populateButtonsBox(journeyObservable.getValue(), buttonsBox);
+
         return buttonsBox;
     }
 
     /**
-     * Updates the view with the details of the given journey.
+     * Adds a listener to update the UI when the journey changes.
      *
-     * @param journey The journey to display
-     * @param stepsGrid The grid to populate with journey steps
-     * @param journeyPane The journey details pane to make visible
-     * @param noJourneyPane The "no journey" pane to hide
+     * @param journeyObservable The observable journey
+     * @param stepsGridPane The grid pane for journey steps
+     * @param buttonsBox The box containing action buttons
      */
-    private static void updateJourneyView(Journey journey, StepsGridPane stepsGrid,
-                                          BorderPane journeyPane, StackPane noJourneyPane) {
-        stepsGrid.getChildren().clear();
-        stepsGrid.circleConnections.clear();
+    private static void addJourneyChangeListener(
+            ObservableValue<Journey> journeyObservable,
+            StepsGridPane stepsGridPane,
+            HBox buttonsBox) {
 
-        populateStepsGrid(journey, stepsGrid);
+        journeyObservable.addListener((o, oldJourney, newJourney) -> {
+            // Clear and repopulate steps grid
+            stepsGridPane.clear();
+            populateStepsGrid(newJourney, stepsGridPane);
 
-        journeyPane.setVisible(true);
-        noJourneyPane.setVisible(false);
+            // Refresh action buttons
+            buttonsBox.getChildren().clear();
+            populateButtonsBox(newJourney, buttonsBox);
+        });
+    }
+
+    /**
+     * Creates a scrollable root pane for the journey details.
+     *
+     * @param content The content to be scrolled
+     * @return A ScrollPane containing the journey details
+     */
+    private static ScrollPane createRootScrollPane(Pane content) {
+        ScrollPane rootPane = new ScrollPane(content);
+        rootPane.setFitToWidth(true);
+        rootPane.setPannable(true);
+        rootPane.getStylesheets().add(STYLE_SHEET);
+        rootPane.setId("detail");
+        return rootPane;
+    }
+
+    /**
+     * Creates a placeholder box when no journey is selected.
+     *
+     * @return A VBox with a "Aucun voyage" message
+     */
+    private static VBox createNoJourneyBox() {
+        VBox noJourney = new VBox();
+        noJourney.setId("no-journey");
+        Text noJourneyLabel = new Text("Aucun voyage");
+        noJourney.getChildren().add(noJourneyLabel);
+        return noJourney;
+    }
+
+    /**
+     * Populates the action buttons box with map and calendar buttons.
+     *
+     * @param journey The current journey
+     * @param buttonsBox The HBox to populate with buttons
+     */
+    private static void populateButtonsBox(Journey journey, HBox buttonsBox) {
+        Button mapButton = createMapButton(journey);
+        Button calendarButton = createCalendarButton(journey);
+
+        buttonsBox.getChildren().addAll(mapButton, calendarButton);
+    }
+
+    /**
+     * Creates a map button to view the journey on a map.
+     *
+     * @param journey The journey to display on the map
+     * @return A Button that opens the journey map
+     */
+    private static Button createMapButton(Journey journey) {
+        Button mapButton = new Button("Carte");
+        mapButton.setOnAction(e -> openJourneyMap(journey, mapButton));
+        return mapButton;
+    }
+
+    /**
+     * Creates a calendar button to export the journey to iCal.
+     *
+     * @param journey The journey to export
+     * @return A Button that saves the journey to calendar
+     */
+    private static Button createCalendarButton(Journey journey) {
+        Button calendarButton = new Button("Calendrier");
+        calendarButton.setOnAction(e -> saveJourneyToCalendar(journey, calendarButton));
+        return calendarButton;
     }
 
     /**
@@ -196,77 +330,99 @@ public record DetailUI(Node rootNode) {
             return;
         }
 
-        // Row counter for grid placement
-        int row = 0;
-        Circle previousCircle = null;
+        int rowCount = 0;
 
-        // Add header
-        Label headerLabel = new Label("Étapes du voyage");
-        headerLabel.getStyleClass().add("steps-header");
-        grid.add(headerLabel, 0, row++, 2, 1);
-
-        // Add each step
-        for (var step : journey.legs()) {
-            // Create departure indicator
-            Circle departureCircle = new Circle(5, Color.RED);
-            Label departureLabel = new Label(formatDateTime(step.depTime()));
-            Label locationLabel = new Label(step.depStop().name());
-            locationLabel.getStyleClass().add("location");
-
-            grid.add(departureCircle, 0, row);
-            grid.add(departureLabel, 1, row++);
-            grid.add(locationLabel, 1, row++);
-
-            // Connect with previous step if not the first one
-            if (previousCircle != null) {
-                grid.circleConnections.add(new CirclePair(previousCircle, departureCircle));
-            }
-
-            previousCircle = departureCircle;
-        }
-
-        // Add final destination
-        if (!journey.legs().isEmpty()) {
-            var lastStep = journey.legs().getLast();
-            Circle arrivalCircle = new Circle(5, Color.RED);
-            Label arrivalLabel = new Label(formatDateTime(lastStep.arrTime()));
-            Label finalLocationLabel = new Label(lastStep.arrStop().name());
-            finalLocationLabel.getStyleClass().add("location");
-
-            grid.add(arrivalCircle, 0, row);
-            grid.add(arrivalLabel, 1, row++);
-            grid.add(finalLocationLabel, 1, row);
-
-            // Connect with last step
-            if (previousCircle != null) {
-                grid.circleConnections.add(new CirclePair(previousCircle, arrivalCircle));
+        for (Journey.Leg leg : journey.legs()) {
+            switch (leg) {
+                case Journey.Leg.Foot f -> {
+                    rowCount = addFootLeg(f, grid, rowCount);
+                }
+                case Journey.Leg.Transport t -> {
+                    rowCount = addTransportLeg(t, grid, rowCount);
+                }
             }
         }
     }
 
-    /**
-     * Format a LocalDateTime for display.
-     *
-     * @param dateTime The datetime to format
-     * @return Formatted date and time string
-     */
-    private static String formatDateTime(LocalDateTime dateTime) {
-        return dateTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+    private static int addFootLeg (Journey.Leg.Foot leg, StepsGridPane grid, int rowCount) {
+        Text text = new Text(FormatterFr.formatLeg(leg));
+        grid.add(text, 2, rowCount, 2, 1);
+
+        return rowCount + 1;
     }
 
-    /**
-     * Configures the map and calendar buttons for the given journey.
-     *
-     * @param mapButton The map button to configure
-     * @param calendarButton The calendar button to configure
-     * @param journey The journey to use for the button actions
-     */
-    private static void configureButtons(Button mapButton, Button calendarButton, Journey journey) {
-        // Configure the map button to open a map with the journey path
-        mapButton.setOnAction(e -> openJourneyMap(journey, mapButton));
+    private static int addTransportLeg (Journey.Leg.Transport leg, StepsGridPane grid, int rowCount) {
+        Text depTime = new Text(FormatterFr.formatTime(leg.depTime()));
+        depTime.getStyleClass().add("departure");
+        Text arrTime = new Text(FormatterFr.formatTime(leg.arrTime()));
 
-        // Configure the calendar button to save journey as iCalendar file
-        calendarButton.setOnAction(e -> saveJourneyToCalendar(journey, calendarButton));
+        Text depStation = new Text(leg.depStop().name());
+        Text arrStation = new Text(leg.arrStop().name());
+
+        Text depPlatform = new Text(FormatterFr.formatPlatformName(leg.depStop()));
+        depPlatform.getStyleClass().add("departure");
+        Text arrPlatform = new Text(FormatterFr.formatPlatformName(leg.arrStop()));
+
+        Circle depCircle = new Circle(3, Color.BLACK);
+        Circle arrCircle = new Circle(3, Color.BLACK);
+
+        ImageView vehicleImageView = new ImageView(VehicleIcons.iconFor(leg.vehicle()));
+        vehicleImageView.setFitHeight(31);
+        vehicleImageView.setFitWidth(31);
+
+        Text destName = new Text(FormatterFr.formatRouteDestination(leg));
+
+        GridPane intermediateStopsGrid = new GridPane();
+        intermediateStopsGrid.getStyleClass().add("intermediate-stops");
+
+        int intermediateStopsRowCount = 0;
+        for (Journey.Leg.IntermediateStop intermediateStop: leg.intermediateStops()) {
+            Text intermediateStopDepTime = new Text(FormatterFr.formatTime(intermediateStop.depTime()));
+            Text intermediateStopArrTime = new Text(FormatterFr.formatTime(intermediateStop.arrTime()));
+            Text intermediateStopName = new Text(intermediateStop.stop().name());
+            intermediateStopsGrid.add(intermediateStopArrTime, 0, intermediateStopsRowCount);
+            intermediateStopsGrid.add(intermediateStopDepTime, 1, intermediateStopsRowCount);
+            intermediateStopsGrid.add(intermediateStopName, 2, intermediateStopsRowCount);
+            intermediateStopsRowCount++;
+        }
+
+        TitledPane intermediateStopsPane = new TitledPane();
+        intermediateStopsPane.setText(intermediateStopsRowCount + " arrêts, " + FormatterFr.formatDuration(leg.duration()));
+        intermediateStopsPane.setContent(intermediateStopsGrid);
+
+        Accordion intermediateStopsView = new Accordion(intermediateStopsPane);
+
+        grid.add(depTime, 0, rowCount);
+        grid.add(depCircle, 1, rowCount);
+        grid.add(depStation, 2, rowCount);
+        grid.add(depPlatform, 3, rowCount);
+
+        rowCount++;
+
+        grid.add(destName, 2, rowCount, 2, 1);
+
+        rowCount++;
+
+        if (intermediateStopsRowCount > 0) {
+            grid.add(vehicleImageView, 0, rowCount - 1, 1, 2);
+            grid.add(intermediateStopsView, 2, rowCount, 2, 1);
+
+            rowCount++;
+        } else {
+            grid.add(vehicleImageView, 0, rowCount - 1, 1, 1);
+
+        }
+
+        grid.add(arrTime, 0, rowCount);
+        grid.add(arrCircle, 1, rowCount);
+        grid.add(arrStation, 2, rowCount);
+        grid.add(arrPlatform, 3, rowCount);
+
+        grid.addCirclePair(new CirclePair(depCircle, arrCircle));
+
+        rowCount ++;
+
+        return rowCount;
     }
 
     /**
@@ -277,12 +433,11 @@ public record DetailUI(Node rootNode) {
      */
     private static void openJourneyMap(Journey journey, Node sourceNode) {
         try {
-            String geoJsonString = "{\"type\":\"LineString\",\"coordinates\":" +
-                    JourneyGeoJsonConverter.toGeoJson(journey) + "}";
-            geoJsonString = geoJsonString.replaceAll("\\s+", "");
+            Json geoJsonString = JourneyGeoJsonConverter.toGeoJson(journey);
 
-            String encodedData = URLEncoder.encode(geoJsonString, StandardCharsets.UTF_8);
-            URI uri = new URI(MAP_BASE_URL + "?data=" + encodedData);
+            String query = MAP_QUERY_PARAM + "=" + URLEncoder.encode(geoJsonString.toString(), StandardCharsets.UTF_8);
+//            URI uri = new URI(MAP_BASE_URL + "?data=" + encodedData);
+            URI uri = new URI(MAP_SCHEME, MAP_AUTHORITY, MAP_PATH,  query, null);
 
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(uri);

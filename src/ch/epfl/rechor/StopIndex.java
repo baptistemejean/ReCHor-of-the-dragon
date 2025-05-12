@@ -57,7 +57,7 @@ public final class StopIndex {
 
                 // Check if this sub-query matches the name
                 if (matcher.find()) {
-                    int score = calculateScore(subQuery, name, matcher.start());
+                    int score = calculateScore(subQuery, name, matcher.start(), matcher.end());
                     totalScore += score;
                 } else {
                     allSubQueriesMatch = false;
@@ -65,11 +65,11 @@ public final class StopIndex {
                 }
             }
 
+            // Only add when all subqueries match
             if (allSubQueriesMatch) {
                 // If it's an alternative name, map it to its canonical form
                 String canonicalName = alternativeNames.getOrDefault(name, name);
-                matchesWithScores.put(canonicalName,
-                        matchesWithScores.getOrDefault(canonicalName, 0) + totalScore);
+                matchesWithScores.put(canonicalName, totalScore);
             }
         }
 
@@ -82,8 +82,7 @@ public final class StopIndex {
     }
 
     /**
-     * Creates a regex pattern for a given sub-query.
-     * Handles character equivalences for accents and case sensitivity.
+     * Creates a regexp pattern for a given sub-query.
      */
     private Pattern createPatternForSubQuery(String subQuery) {
         StringBuilder patternBuilder = new StringBuilder();
@@ -116,7 +115,6 @@ public final class StopIndex {
             }
         }
 
-        // Set appropriate flags based on the sub-query
         int flags = Pattern.UNICODE_CASE;
         if (!containsUppercase(subQuery)) {
             flags |= Pattern.CASE_INSENSITIVE;
@@ -135,7 +133,7 @@ public final class StopIndex {
     /**
      * Calculates the score for a sub-query match in a stop name.
      */
-    private int calculateScore(String subQuery, String stopName, int matchStart) {
+    private int calculateScore(String subQuery, String stopName, int matchStart, int matchEnd) {
         // Calculate base score - percentage of characters matching
         int baseScore = Math.max(1, (subQuery.length() * 100) / stopName.length());
 
@@ -143,7 +141,7 @@ public final class StopIndex {
         boolean isWordStart = matchStart == 0 || !Character.isLetter(stopName.charAt(matchStart - 1));
 
         // Check if sub-query is at the end of a word
-        int matchEnd = matchStart + subQuery.length();
+//        int matchEnd = matchStart + subQuery.length() - 1;
         boolean isWordEnd = matchEnd >= stopName.length() ||
                 !Character.isLetter(stopName.charAt(matchEnd));
 

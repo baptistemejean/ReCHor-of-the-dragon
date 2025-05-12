@@ -1,8 +1,13 @@
 package ch.epfl.rechor;
 
+import ch.epfl.rechor.timetable.TimeTable;
+import ch.epfl.rechor.timetable.mapped.FileTimeTable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -163,5 +168,23 @@ public class StopIndexTest {
 
         // "Lausanne-Gare" should come second as "lau" is at the beginning but the stop name is longer
         assertEquals("Lausanne-Gare", results.get(1));
+    }
+
+    @Test
+    void stopIndexWorksWithEveryString () throws IOException {
+        TimeTable t = FileTimeTable.in(Path.of("timetable"));
+        List<String> strs = new ArrayList<>();
+
+        for (int i = 0; i < t.stations().size(); i ++) {
+            strs.add(t.stations().name(i));
+        }
+
+        StopIndex specialIndex = new StopIndex(strs, Map.of());
+
+        List<String> results = specialIndex.stopsMatching("Fribourg", 10);
+
+        for (String r: results) {
+            System.out.println(r);
+        }
     }
 }

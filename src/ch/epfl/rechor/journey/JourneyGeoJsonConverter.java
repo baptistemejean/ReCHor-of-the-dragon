@@ -15,14 +15,11 @@ import java.util.Map;
 public final class JourneyGeoJsonConverter {
 
     private JourneyGeoJsonConverter() {
-        throw new UnsupportedOperationException("This class cannot be instantiated");
+        throw new UnsupportedOperationException("JourneyGeoJsonConverter is a utility class and cannot be instantiated");
     }
 
     /**
      * Converts a Journey object to a GeoJSON LineString representation.
-     * The GeoJSON contains all stops of the journey (departure, arrival, and intermediate stops)
-     * with coordinates rounded to 5 decimal places.
-     * Consecutive duplicate points are eliminated.
      *
      * @param journey The journey to convert
      * @return A Json object representing the journey as a GeoJSON LineString
@@ -35,7 +32,7 @@ public final class JourneyGeoJsonConverter {
         for (Journey.Leg leg : journey.legs()) {
             // Add departure stop if it's not the same as the previous stop
             Stop depStop = leg.depStop();
-            if (previousStop == null || !areCoordinatesEqual(previousStop, depStop)) {
+            if (previousStop == null || areCoordinatesDifferent(previousStop, depStop)) {
                 coordinates.add(stopToJsonCoordinates(depStop));
                 previousStop = depStop;
             }
@@ -43,7 +40,7 @@ public final class JourneyGeoJsonConverter {
             // Add intermediate stops
             for (Journey.Leg.IntermediateStop intermediateStop : leg.intermediateStops()) {
                 Stop stop = intermediateStop.stop();
-                if (!areCoordinatesEqual(previousStop, stop)) {
+                if (areCoordinatesDifferent(previousStop, stop)) {
                     coordinates.add(stopToJsonCoordinates(stop));
                     previousStop = stop;
                 }
@@ -51,13 +48,12 @@ public final class JourneyGeoJsonConverter {
 
             // Add arrival stop if it's not the same as the previous stop
             Stop arrStop = leg.arrStop();
-            if (!areCoordinatesEqual(previousStop, arrStop)) {
+            if (areCoordinatesDifferent(previousStop, arrStop)) {
                 coordinates.add(stopToJsonCoordinates(arrStop));
                 previousStop = arrStop;
             }
         }
 
-        // Create the GeoJSON LineString object
         return new Json.JObject(Map.of(
                 "type", new Json.JString("LineString"),
                 "coordinates", new Json.JArray(coordinates)
@@ -100,8 +96,10 @@ public final class JourneyGeoJsonConverter {
      * @param stop2 The second stop
      * @return true if both stops have the same coordinates, false otherwise
      */
-    private static boolean areCoordinatesEqual(Stop stop1, Stop stop2) {
-        return roundToFiveDecimalPlaces(stop1.longitude()) == roundToFiveDecimalPlaces(stop2.longitude())
-                && roundToFiveDecimalPlaces(stop1.latitude()) == roundToFiveDecimalPlaces(stop2.latitude());
+    private static boolean areCoordinatesDifferent(Stop stop1, Stop stop2) {
+        return roundToFiveDecimalPlaces(stop1.longitude()) !=
+               roundToFiveDecimalPlaces(stop2.longitude()) ||
+               roundToFiveDecimalPlaces(stop1.latitude()) !=
+               roundToFiveDecimalPlaces(stop2.latitude());
     }
 }
