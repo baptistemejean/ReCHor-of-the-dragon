@@ -144,12 +144,12 @@ public record DetailUI(Node rootNode) {
     /**
      * Creates a new DetailUI instance for the given journey.
      *
-     * @param journeyObservable An observable value containing the journey to display
+     * @param journeyO An observable value containing the journey to display
      * @return A new DetailUI instance
      */
-    public static DetailUI create(ObservableValue<Journey> journeyObservable) {
+    public static DetailUI create(ObservableValue<Journey> journeyO) {
         // Create the main container
-        StackPane mainContainer = createMainContainer(journeyObservable);
+        StackPane mainContainer = createMainContainer(journeyO);
 
         // Create scrollable root pane
         ScrollPane rootPane = createRootScrollPane(mainContainer);
