@@ -21,11 +21,12 @@ import javafx.stage.Stage;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public final class DetailUITest extends Application {
+public final class TestSummaryUI extends Application {
     public static void main(String[] args) { launch(args); }
 
     private static int stationId(Stations stations, String name) {
@@ -44,20 +45,24 @@ public final class DetailUITest extends Application {
         int arrStationId = stationId(stations, "Gruyères");
         Router router = new Router(timeTable);
         Profile profile = router.profile(date, arrStationId);
+
         List<Journey> journeys = JourneyExtractor
                 .journeys(profile, depStationId);
 
-        var wrapper = new Object(){ int i = 0; };
-        ObjectProperty<Journey> j = new SimpleObjectProperty<>(journeys.get(wrapper.i));
+        ObjectProperty<List<Journey>> journeysO =
+                new SimpleObjectProperty<>(journeys);
+        ObjectProperty<LocalTime> depTimeO =
+                new SimpleObjectProperty<>(LocalTime.of(21, 57));
+        SummaryUI summaryUI = SummaryUI.create(journeysO, depTimeO);
 
         Button switchJourney = new Button("Change (test)");
         switchJourney.setOnAction(e -> {
-            j.set(journeys.get(++wrapper.i));
+            int newDepStationId = stationId(stations, "Ecublens VD, EPFL");
+            journeysO.set(JourneyExtractor.journeys(profile, newDepStationId));
         });
-        DetailUI detailUI = DetailUI.create(j);
 
         GridPane root = new GridPane();
-        root.addRow(0, detailUI.rootNode());
+        root.addRow(0, summaryUI.rootNode());
         root.addRow(1, switchJourney);
 
         primaryStage.setScene(new Scene(root));
