@@ -168,12 +168,19 @@ public record DetailUI(Node rootNode) {
 
         // No journey placeholder
         VBox noJourneyBox = createNoJourneyBox();
-        noJourneyBox.setVisible(false);
         mainContainer.getChildren().add(noJourneyBox);
 
         // Journey details container
         VBox journeyDetailsContainer = new VBox();
+        journeyDetailsContainer.setVisible(false);
         mainContainer.getChildren().add(journeyDetailsContainer);
+
+        journeyObservable.addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                noJourneyBox.setVisible(false);
+                journeyDetailsContainer.setVisible(true);
+            }
+        });
 
         // Steps and annotations container
         StackPane stepsAndAnnotationsContainer = new StackPane();
@@ -243,7 +250,7 @@ public record DetailUI(Node rootNode) {
             StepsGridPane stepsGridPane,
             HBox buttonsBox) {
 
-        journeyObservable.addListener((o, oldJourney, newJourney) -> {
+        journeyObservable.addListener((observable, oldJourney, newJourney) -> {
             // Clear and repopulate steps grid
             stepsGridPane.clear();
             populateStepsGrid(newJourney, stepsGridPane);

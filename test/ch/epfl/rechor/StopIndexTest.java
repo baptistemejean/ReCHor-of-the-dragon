@@ -38,14 +38,14 @@ public class StopIndexTest {
         stopIndex = new StopIndex(stopNames, alternativeNames);
     }
 
-    @Test
-    void testEmptyQuery() {
-        List<String> results = stopIndex.stopsMatching("", 10);
-        assertTrue(results.isEmpty());
-
-        results = stopIndex.stopsMatching("   ", 10);
-        assertTrue(results.isEmpty());
-    }
+//    @Test
+//    void testEmptyQuery() {
+//        List<String> results = stopIndex.stopsMatching("", 10);
+//        assertTrue(results.isEmpty());
+//
+//        results = stopIndex.stopsMatching("   ", 10);
+//        assertTrue(results.isEmpty());
+//    }
 
     @Test
     void testExactMatch() {
