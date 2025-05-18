@@ -33,14 +33,16 @@ public final class StopIndex {
      * @return A list of stop names matching the query, sorted by relevance
      */
     public List<String> stopsMatching(String query, int maxResults) {
-        if (query.isEmpty() || query.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
+//        if (query == null || query.isEmpty() || query.trim().isEmpty() ) {
+//            // Return names in order when query is empty
+////            return stopNames.stream().limit(maxResults).toList();
+//            return Collections.emptyList();
+//        }
         // Split the query into sub-queries
         String[] subQueries = query.trim().split("\\s+");
 
         // Collect all matches with their scores
-        Map<String, Integer> matchesWithScores = new HashMap<>();
+        Map<String, Integer> matchesWithScores = new TreeMap<>();
 
         // Process all stop names and alternative names
         Set<String> allNames = new HashSet<>(stopNames);
@@ -115,10 +117,10 @@ public final class StopIndex {
             }
         }
 
-        int flags = Pattern.UNICODE_CASE;
-        if (!containsUppercase(subQuery)) {
-            flags |= Pattern.CASE_INSENSITIVE;
-        }
+        int flags = Pattern.CASE_INSENSITIVE;
+//        if (!containsUppercase(subQuery)) {
+//            flags |= Pattern.CASE_INSENSITIVE;
+//        }
 
         return Pattern.compile(patternBuilder.toString(), flags);
     }
