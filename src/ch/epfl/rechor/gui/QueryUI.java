@@ -76,17 +76,17 @@ public record QueryUI(
         );
 
         // Create and configure date picker
-        DatePicker datePicker = new DatePicker();
+        DatePicker datePicker = new DatePicker(LocalDate.now());
         datePicker.setId("date");
         Label datePickerLabel = new Label("Date\u202f:");
 
         // Create and configure time picker with formatter
+
         TextField timePicker = new TextField();
         timePicker.setId("time");
         timePicker.setPromptText(TIME_PROMPT);
 
-        TextFormatter<LocalTime> timeFormatter = createTimeFormatter();
-        timePicker.setTextFormatter(timeFormatter);
+        ObjectProperty<LocalTime> timeProperty = setTimeFormatter(timePicker);
 
         Label timePickerLabel = new Label("Heure\u202f:");
 
@@ -107,7 +107,7 @@ public record QueryUI(
                 depField.stopO(),
                 arrField.stopO(),
                 datePicker.valueProperty(),
-                timeFormatter.valueProperty()
+                timeProperty
         );
     }
 
@@ -131,20 +131,24 @@ public record QueryUI(
     }
 
     /**
-     * Creates a text formatter for the time input field that ensures correct time format.
+     * Sets the text formatter for the specified field that ensures correct time format.
      *
-     * @return A configured TextFormatter for LocalTime values
+     * @param field The specified field to set the formatter for
+     *
+     * @return the formatter property
      */
-    private static TextFormatter<LocalTime> createTimeFormatter() {
-        // Formatter for displaying time: always two digits (e.g., "09:30")
+    private static ObjectProperty<LocalTime> setTimeFormatter(TextField field) {
         DateTimeFormatter displayFormatter = DateTimeFormatter.ofPattern(TIME_DISPLAY_FORMAT);
-        // Formatter for parsing input: allows "H:mm" and "HH:mm"
         DateTimeFormatter parseFormatter = DateTimeFormatter.ofPattern(TIME_PARSE_FORMAT);
 
         // Converter for LocalTime <-> String
         LocalTimeStringConverter converter = new LocalTimeStringConverter(displayFormatter, parseFormatter);
 
         // TextFormatter to format and validate input
-        return new TextFormatter<>(converter);
+        TextFormatter<LocalTime> timeFormatter = new TextFormatter<>(converter);
+        field.setTextFormatter(timeFormatter);
+        field.setText(LocalTime.now().format(displayFormatter));
+
+        return timeFormatter.valueProperty();
     }
 }
