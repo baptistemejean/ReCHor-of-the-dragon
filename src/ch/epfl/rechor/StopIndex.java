@@ -90,39 +90,41 @@ public final class StopIndex {
         StringBuilder patternBuilder = new StringBuilder();
 
         for (int i = 0; i < subQuery.length(); i++) {
-            char c = subQuery.charAt(i);
-
-            switch (Character.toLowerCase(c)) {
-                case 'c':
-                    patternBuilder.append("[cç]");
-                    break;
-                case 'a':
-                    patternBuilder.append("[aáàâä]");
-                    break;
-                case 'e':
-                    patternBuilder.append("[eéèêë]");
-                    break;
-                case 'i':
-                    patternBuilder.append("[iíìîï]");
-                    break;
-                case 'o':
-                    patternBuilder.append("[oóòôö]");
-                    break;
-                case 'u':
-                    patternBuilder.append("[uúùûü]");
-                    break;
-                default:
-                    patternBuilder.append(Pattern.quote(String.valueOf(c)));
-                    break;
-            }
+            addMatchingPattern(subQuery.charAt(i), patternBuilder);
         }
 
-        int flags = Pattern.CASE_INSENSITIVE;
-//        if (!containsUppercase(subQuery)) {
-//            flags |= Pattern.CASE_INSENSITIVE;
-//        }
+        int flags = Pattern.UNICODE_CASE;
+        if (!containsUppercase(subQuery)) {
+            flags |= Pattern.CASE_INSENSITIVE;
+        }
 
         return Pattern.compile(patternBuilder.toString(), flags);
+    }
+
+    private void addMatchingPattern (char c, StringBuilder patternBuilder) {
+        switch (c) {
+            case 'c':
+                patternBuilder.append("[cç]");
+                break;
+            case 'a':
+                patternBuilder.append("[aáàâä]");
+                break;
+            case 'e':
+                patternBuilder.append("[eéèêë]");
+                break;
+            case 'i':
+                patternBuilder.append("[iíìîï]");
+                break;
+            case 'o':
+                patternBuilder.append("[oóòôö]");
+                break;
+            case 'u':
+                patternBuilder.append("[uúùûü]");
+                break;
+            default:
+                patternBuilder.append(Pattern.quote(String.valueOf(c)));
+                break;
+        }
     }
 
     /**
@@ -136,14 +138,13 @@ public final class StopIndex {
      * Calculates the score for a sub-query match in a stop name.
      */
     private int calculateScore(String subQuery, String stopName, int matchStart, int matchEnd) {
-        // Calculate base score - percentage of characters matching
+        // Calculate percentage of characters matching
         int baseScore = Math.max(1, (subQuery.length() * 100) / stopName.length());
 
         // Check if sub-query is at the beginning of a word
         boolean isWordStart = matchStart == 0 || !Character.isLetter(stopName.charAt(matchStart - 1));
 
         // Check if sub-query is at the end of a word
-//        int matchEnd = matchStart + subQuery.length() - 1;
         boolean isWordEnd = matchEnd >= stopName.length() ||
                 !Character.isLetter(stopName.charAt(matchEnd));
 

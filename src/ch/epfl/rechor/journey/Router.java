@@ -3,9 +3,11 @@ package ch.epfl.rechor.journey;
 import ch.epfl.rechor.Bits32_24_8;
 import ch.epfl.rechor.PackedRange;
 import ch.epfl.rechor.timetable.Connections;
+import ch.epfl.rechor.timetable.Stations;
 import ch.epfl.rechor.timetable.TimeTable;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 
 /**
  * Router class responsible for computing optimal journeys through a public transport network.
@@ -26,6 +28,8 @@ public record Router(TimeTable timeTable) {
         Connections connections = timeTable().connectionsFor(date);
         Profile.Builder profileBuilder = new Profile.Builder(timeTable, date, arrStationId);
 
+        int[] walkableStops = createWalkableStops(arrStationId);
+
         // Process connections in decreasing order (connections are pre-sorted)
         for (int connId = 0; connId < connections.size(); connId++) {
             // Initialize a new Pareto front for this connection
@@ -39,7 +43,7 @@ public record Router(TimeTable timeTable) {
             int connArrTime = connections.arrMins(connId);
 
             // Process the connection using three strategies
-            processDirectWalkToDestination(arrStationId, connections, connId, connArrStopId, frontBuilder);
+            processDirectWalkToDestination(arrStationId, connections, connId, connArrStopId, walkableStops, frontBuilder);
             processContinuingWithSameTrip(profileBuilder, connTripId, frontBuilder);
             processTransferAtArrival(profileBuilder, connArrStopId, connArrTime, connId, frontBuilder);
 
@@ -60,6 +64,23 @@ public record Router(TimeTable timeTable) {
         return profileBuilder.build();
     }
 
+    private int[] createWalkableStops (int arrStationId) {
+        Stations stations = timeTable().stations();
+        int[] walkableStops = new int[stations.size()];
+        for (int i = 0; i < stations.size(); i++) {
+            int mins;
+            try {
+                mins = timeTable().transfers().minutesBetween(i, arrStationId);
+            } catch (NoSuchElementException e) {
+                mins = -1;
+            }
+
+            walkableStops[i] = mins;
+        }
+
+        return walkableStops;
+    }
+
     /**
      * Processes the possibility of walking directly from the connection's arrival stop to the destination.
      * Adds a journey to the front if a transfer exists.
@@ -71,20 +92,26 @@ public record Router(TimeTable timeTable) {
      * @param frontBuilder The Pareto front builder to update
      */
     private void processDirectWalkToDestination(int arrStationId, Connections connections,
-                                                int connId, int connArrStopId,
+                                                int connId, int connArrStopId, int[] walkableStops,
                                                 ParetoFront.Builder frontBuilder) {
-        int transferArrRange = timeTable.transfers().arrivingAt(arrStationId);
-
-        for (int transferId = PackedRange.startInclusive(transferArrRange);
-             transferId < PackedRange.endExclusive(transferArrRange);
-             ++transferId) {
-
-            if (timeTable.transfers().depStationId(transferId) == timeTable.stationId(connArrStopId)) {
-                // Add journey: connection + walk to destination
-                int arrivalTime = connections.arrMins(connId) + timeTable.transfers().minutes(transferId);
-                frontBuilder.add(arrivalTime, 0, connId);
-            }
+        int minutesBetween = walkableStops[timeTable().stationId(connArrStopId)];
+        if (minutesBetween != -1) {
+            int arrivalTime = connections.arrMins(connId) + minutesBetween;
+            frontBuilder.add(arrivalTime, 0, connId);
         }
+
+//        int transferArrRange = timeTable.transfers().arrivingAt(arrStationId);
+//
+//        for (int transferId = PackedRange.startInclusive(transferArrRange);
+//             transferId < PackedRange.endExclusive(transferArrRange);
+//             ++transferId) {
+//
+//            if (timeTable.transfers().depStationId(transferId) == timeTable.stationId(connArrStopId)) {
+//                // Add journey: connection + walk to destination
+//                int arrivalTime = connections.arrMins(connId) + timeTable.transfers().minutes(transferId);
+//                frontBuilder.add(arrivalTime, 0, connId);
+//            }
+//        }
     }
 
     /**
@@ -120,11 +147,7 @@ public record Router(TimeTable timeTable) {
         if (stationFronts != null) {
             stationFronts.forEach((long t) -> {
                 if (PackedCriteria.depMins(t) >= connArrTime) {
-                    frontBuilder.add(PackedCriteria.pack(
-                            PackedCriteria.arrMins(t),
-                            PackedCriteria.changes(t) + 1,
-                            connId
-                    ));
+                    frontBuilder.add(PackedCriteria.arrMins(t), PackedCriteria.changes(t) + 1, connId);
                 }
             });
         }
