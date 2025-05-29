@@ -38,7 +38,7 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
     public static StopField create(StopIndex stopIndex) {
         // Create the text field and selected stop property
         TextField textField = new TextField();
-        ObjectProperty<String> selectedStop = new SimpleObjectProperty<>();
+        ObjectProperty<String> selectedStop = new SimpleObjectProperty<>("");
 
         // Set up the popup and list view for suggestions
         Popup popup = setupPopup();
@@ -47,9 +47,6 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
 
         // Add the list view to the popup
         popup.getContent().add(listView);
-
-        // Initialize with matches for current text (empty initially)
-        updateSuggestions(stopIndex, textField.getText(), listedResults);
 
         // Create listeners for updating the popup
         ChangeListener<String> textChangeListener = createTextChangeListener(stopIndex, listView, listedResults);
@@ -122,9 +119,10 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
             StopIndex stopIndex,
             ListView<String> listView,
             ObservableList<String> resultsList) {
-        return (observable, oldValue, newValue) -> {
+        return (o, oldValue, newValue) -> {
             updateSuggestions(stopIndex, newValue, resultsList);
             listView.getSelectionModel().select(0);
+
         };
     }
 
@@ -138,7 +136,7 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
     private static ChangeListener<javafx.geometry.Bounds> createBoundsChangeListener(
             TextField textField,
             Popup popup) {
-        return (observable, oldValue, newValue) -> {
+        return (o, oldValue, newValue) -> {
             javafx.geometry.Bounds newScreenBounds = textField.localToScreen(newValue);
             popup.setAnchorX(newScreenBounds.getMinX());
             popup.setAnchorY(newScreenBounds.getMaxY());
@@ -165,7 +163,7 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
             ChangeListener<String> textChangeListener,
             ChangeListener<javafx.geometry.Bounds> boundsChangeListener) {
 
-        textField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+        textField.focusedProperty().subscribe((oldValue, newValue) -> {
             if (newValue) {
                 // Field gained focus
                 handleFocusGained(textField, popup, selectedStop, listView, stopIndex, resultsList, textChangeListener, boundsChangeListener);
@@ -191,10 +189,14 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
 
         // Restore selected value if it exists
         String selectedValue = selectedStop.getValue();
-        if (selectedValue != null) {
+        if (selectedValue != null && !selectedValue.isEmpty()) {
             updateSuggestions(stopIndex, selectedValue, resultsList);
             textField.setText(selectedValue);
             listView.getSelectionModel().select(selectedValue);
+        } else {
+            // Select first suggestion
+            updateSuggestions(stopIndex, selectedValue, resultsList);
+            listView.getSelectionModel().select(0);
         }
 
         // Show popup and add listeners
@@ -216,8 +218,8 @@ public record StopField(TextField field, ObservableValue<String> stopO) {
 
         // Update selected value and text field
         String selected = listView.getSelectionModel().getSelectedItem();
-        selectedStop.set(selected);
-        textField.setText(selected);
+        selectedStop.set(selected != null ? selected : "");
+        textField.setText(selected != null ? selected : "");
 
         // Hide popup and remove listeners
         popup.hide();

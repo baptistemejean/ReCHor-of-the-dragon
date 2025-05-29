@@ -41,9 +41,10 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
     private static final String STYLE_SHEET = "summary.css";
 
     // Layout Constants
-    private static final int CELL_PADDING = 6;
-    private static final int LINE_MARGIN = 10;
+    private static final int LINE_MARGIN = 5;
     private static final int CIRCLE_RADIUS = 3;
+
+    private static final int VEHICLE_ICON_SIZE = 20;
 
     /**
      * Creates a new SummaryUI instance.
@@ -56,14 +57,7 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         ListView<Journey> journeyListView = createJourneyListView(journeys, desiredTime);
         journeyListView.setCellFactory(p -> new JourneyCell());
 
-        ObjectProperty<Journey> selectedJourneyProperty = new SimpleObjectProperty<>();
-
-        // Bind the selected journey property to the ListView selection
-        journeyListView.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldVal, newVal) -> selectedJourneyProperty.set(newVal)
-        );
-
-        return new SummaryUI(journeyListView, selectedJourneyProperty);
+        return new SummaryUI(journeyListView, journeyListView.getSelectionModel().selectedItemProperty());
     }
 
     /**
@@ -116,10 +110,10 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         }
 
         // Select the right journey using the desired time
-        selectJourneyByDesiredTime(journeyListView, journeys.getValue(), desiredTime.getValue());
+//        selectJourneyByDesiredTime(journeyListView, journeys.getValue(), desiredTime.getValue());
 
         // Listen to potential journey list changes
-        journeys.addListener((observable, oldValue, newValue) -> {
+        journeys.subscribe((oldValue, newValue) -> {
             journeyItems.clear();
             if (newValue != null) {
                 journeyItems.addAll(newValue);
@@ -128,7 +122,7 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         });
 
         // Listen to potential desired time changes
-        desiredTime.addListener((observable, oldValue, newValue) ->
+        desiredTime.subscribe((oldValue, newValue) ->
                 selectJourneyByDesiredTime(journeyListView, journeys.getValue(), newValue)
         );
 
@@ -162,8 +156,8 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         public JourneyCell() {
             // Initialize vehicle icon
             vehicleIcon = new ImageView();
-            vehicleIcon.setFitWidth(20);
-            vehicleIcon.setFitHeight(20);
+            vehicleIcon.setFitWidth(VEHICLE_ICON_SIZE);
+            vehicleIcon.setFitHeight(VEHICLE_ICON_SIZE);
 
             // Initialize route information components
             routeLabel = new Text();
@@ -182,6 +176,7 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
 
             // Initialize timeline pane to visualize the journey
             journeyTimelinePane = createJourneyTimelinePane();
+            journeyTimelinePane.setPrefSize(0, 0);
 
             // Set up main container
             mainContainer = new BorderPane();
@@ -190,7 +185,6 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
             mainContainer.setBottom(durationContainer);
             mainContainer.setLeft(departureTimeLabel);
             mainContainer.setCenter(journeyTimelinePane);
-            mainContainer.setPadding(new Insets(CELL_PADDING));
             mainContainer.getStyleClass().add("journey");
         }
 
@@ -271,8 +265,6 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
             // Find first transport leg and add transfer points
             Journey.Leg.Transport firstTransportLeg = null;
             for (Journey.Leg leg : journey.legs()) {
-                Objects.requireNonNull(leg);
-
                 if (leg instanceof Journey.Leg.Transport transportLeg && firstTransportLeg == null) {
                     firstTransportLeg = transportLeg;
                 } else if (leg instanceof Journey.Leg.Foot footLeg) {
@@ -325,7 +317,7 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
                 LocalDateTime timePoint,
                 Duration journeyDuration) {
             return (double) Duration.between(journeyStart, timePoint)
-                    .toNanos() / journeyDuration.toNanos();
+                    .toMillis() / journeyDuration.toMillis();
         }
 
         /**

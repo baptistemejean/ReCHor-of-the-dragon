@@ -14,7 +14,9 @@ public final class VehicleIcons {
     private static final Map<Vehicle, javafx.scene.image.Image> ICON_CACHE = new EnumMap<>(Vehicle.class);
 
     // Private constructor to prevent instantiation
-    private VehicleIcons() {}
+    private VehicleIcons() {
+        throw new UnsupportedOperationException("VehicleIcons is a utility class and cannot be instantiated");
+    }
 
     /**
      * Returns the icon for the given vehicle type.

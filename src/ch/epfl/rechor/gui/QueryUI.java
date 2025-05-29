@@ -28,22 +28,11 @@ public record QueryUI(
         ObservableValue<LocalDate> dateO,
         ObservableValue<LocalTime> timeO) {
 
-    /** CSS stylesheet for styling the query UI components */
     private static final String STYLE_SHEET = "query.css";
-
-    /** Format for displaying time values (HH:mm) */
     private static final String TIME_DISPLAY_FORMAT = "HH:mm";
-
-    /** Format for parsing time input (accepts both H:mm and HH:mm) */
     private static final String TIME_PARSE_FORMAT = "H:mm";
-
-    /** Prompt text for the departure stop field */
     private static final String DEP_PROMPT = "Nom de l'arrêt de départ";
-
-    /** Prompt text for the arrival stop field */
     private static final String ARR_PROMPT = "Nom de l'arrêt d'arrivée";
-
-    /** Prompt text for the time field */
     private static final String TIME_PROMPT = "HH:mm";
 
     /**

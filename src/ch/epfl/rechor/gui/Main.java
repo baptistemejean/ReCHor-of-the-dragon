@@ -28,11 +28,11 @@ import java.util.*;
  * and manages the connection between the UI and the journey planning logic.
  */
 public class Main extends Application {
-    /** Application title displayed in the window */
     private final static String TITLE = "ReCHor";
-
-    /** The path to the timetable data folder */
     private final static String TIMETABLE_PATH = "timetable";
+    private final static int MIN_WIDTH = 800;
+    private final static int MIN_HEIGHT = 600;
+
 
     /** Observable list of journeys to be displayed in the UI */
     private ObservableValue<List<Journey>> displayedJourneys;
@@ -168,8 +168,8 @@ public class Main extends Application {
      */
     private void configureStage(Stage primaryStage, Scene scene) {
         primaryStage.setScene(scene);
-        primaryStage.setMinWidth(800);
-        primaryStage.setMinHeight(600);
+        primaryStage.setMinWidth(MIN_WIDTH);
+        primaryStage.setMinHeight(MIN_HEIGHT);
         primaryStage.setTitle(TITLE);
     }
 

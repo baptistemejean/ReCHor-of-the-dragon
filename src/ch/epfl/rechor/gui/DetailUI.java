@@ -33,11 +33,13 @@ import java.util.Optional;
 
 /**
  * Detailed user interface for displaying journey information.
- *
+ * <p>
  * This class provides a comprehensive view of a journey, including:
- * - Step-by-step journey details
- * - Interactive map and calendar export buttons
- *
+ * <ul>
+ * <li>Step-by-step journey details</li>
+ * <li>Interactive map and calendar export buttons</li>
+ * </ul>
+ * </p>
  * The UI is designed to be responsive and dynamically update
  * when the journey changes.
  */
@@ -50,9 +52,12 @@ public record DetailUI(Node rootNode) {
     private static final String MAP_QUERY_PARAM = "data";
 
     // Layout Constants
-    private static final int SPACING = 6;
-    private static final int PADDING = 10;
-    private static final int CONNECTION_STROKE_WIDTH = 2;
+    private static final int ANNOTATIONS_STROKE_WIDTH = 2;
+    private static final int VEHICLE_ICON_SIZE = 31;
+    private static final int ANNOTATIONS_CIRCLE_RADIUS = 3;
+    private static final javafx.scene.paint.Color ANNOTATIONS_CIRCLE_COLOR = Color.BLACK;
+    private static final javafx.scene.paint.Color ANNOTATIONS_LINE_COLOR = Color.RED;
+
 
     /**
      * Represents a pair of connected journey step circles.
@@ -65,7 +70,7 @@ public record DetailUI(Node rootNode) {
      * between journey step circles.
      */
     private static class StepsGridPane extends GridPane {
-        private final List<CirclePair> circleConnections = new ArrayList<>();
+        private final List<CirclePair> circleConnections;
         private final Pane annotationsPane;
 
         /**
@@ -76,16 +81,17 @@ public record DetailUI(Node rootNode) {
         public StepsGridPane(Pane annotationsPane) {
             super();
             this.annotationsPane = annotationsPane;
-            configureLayout();
+            this.circleConnections = new ArrayList<>();
+//            configureLayout();
         }
 
         /**
          * Configures the initial layout of the grid pane.
          */
         private void configureLayout() {
-            setHgap(SPACING);
-            setVgap(5);
-            setPadding(new Insets(PADDING));
+//            setHgap(SPACING);
+//            setVgap(5);
+//            setPadding(new Insets(PADDING));
         }
 
         /**
@@ -134,8 +140,8 @@ public record DetailUI(Node rootNode) {
             double endY = pair.arrival.getBoundsInParent().getCenterY();
 
             Line line = new Line(startX, startY, endX, endY);
-            line.setStroke(Color.RED);
-            line.setStrokeWidth(CONNECTION_STROKE_WIDTH);
+            line.setStroke(ANNOTATIONS_LINE_COLOR);
+            line.setStrokeWidth(ANNOTATIONS_STROKE_WIDTH);
 
             annotationsPane.getChildren().add(line);
         }
@@ -175,10 +181,13 @@ public record DetailUI(Node rootNode) {
         journeyDetailsContainer.setVisible(false);
         mainContainer.getChildren().add(journeyDetailsContainer);
 
-        journeyObservable.addListener((observable, oldValue, newValue) -> {
+        journeyObservable.subscribe((oldValue, newValue) -> {
             if (newValue != null) {
                 noJourneyBox.setVisible(false);
                 journeyDetailsContainer.setVisible(true);
+            } else {
+                noJourneyBox.setVisible(true);
+                journeyDetailsContainer.setVisible(false);
             }
         });
 
@@ -191,14 +200,15 @@ public record DetailUI(Node rootNode) {
         journeyDetailsContainer.getChildren().add(actionButtonsBox);
 
         // Annotations pane
-        Pane annotationsPane = createAnnotationsPane();
+        Pane annotationsPane = new Pane();
+        annotationsPane.setId("annotations");
 
         // Steps grid
         StepsGridPane stepsGridPane = new StepsGridPane(annotationsPane);
         stepsGridPane.setId("legs");
 
         // Populate initial journey details
-        populateStepsGrid(journeyObservable.getValue(), stepsGridPane);
+//        populateStepsGrid(journeyObservable.getValue(), stepsGridPane);
 
         // Add panes to container
         stepsAndAnnotationsContainer.getChildren().add(annotationsPane);
@@ -211,26 +221,14 @@ public record DetailUI(Node rootNode) {
     }
 
     /**
-     * Creates a pane for additional annotations.
-     *
-     * @return A Pane for drawing annotations
-     */
-    private static Pane createAnnotationsPane() {
-        Pane annotationsPane = new Pane();
-        annotationsPane.setId("annotations");
-        return annotationsPane;
-    }
-
-    /**
      * Creates an HBox with action buttons for the journey.
      *
      * @param journeyObservable The observable journey
      * @return An HBox containing action buttons
      */
     private static HBox createActionButtonsBox(ObservableValue<Journey> journeyObservable) {
-        HBox buttonsBox = new HBox(SPACING);
+        HBox buttonsBox = new HBox();
         buttonsBox.setId("buttons");
-        buttonsBox.setPadding(new Insets(PADDING));
         buttonsBox.setAlignment(Pos.CENTER);
 
         populateButtonsBox(journeyObservable.getValue(), buttonsBox);
@@ -250,14 +248,14 @@ public record DetailUI(Node rootNode) {
             StepsGridPane stepsGridPane,
             HBox buttonsBox) {
 
-        journeyObservable.addListener((observable, oldJourney, newJourney) -> {
+        journeyObservable.subscribe((oldValue, newValue) -> {
             // Clear and repopulate steps grid
             stepsGridPane.clear();
-            populateStepsGrid(newJourney, stepsGridPane);
+            populateStepsGrid(newValue, stepsGridPane);
 
             // Refresh action buttons
             buttonsBox.getChildren().clear();
-            populateButtonsBox(newJourney, buttonsBox);
+            populateButtonsBox(newValue, buttonsBox);
         });
     }
 
@@ -351,6 +349,13 @@ public record DetailUI(Node rootNode) {
         }
     }
 
+    /**
+     * Adds a formatted foot leg to the grid.
+     * @param leg The leg to add
+     * @param grid The grid to add the formatted leg to
+     * @param rowCount The row count before adding this leg
+     * @return The updated row count
+     */
     private static int addFootLeg (Journey.Leg.Foot leg, StepsGridPane grid, int rowCount) {
         Text text = new Text(FormatterFr.formatLeg(leg));
         grid.add(text, 2, rowCount, 2, 1);
@@ -358,6 +363,13 @@ public record DetailUI(Node rootNode) {
         return rowCount + 1;
     }
 
+    /**
+     * Adds a formatted transport leg to the grid.
+     * @param leg The leg to add
+     * @param grid The grid to add the formatted leg to
+     * @param rowCount The row count before adding this leg
+     * @return The updated row count
+     */
     private static int addTransportLeg (Journey.Leg.Transport leg, StepsGridPane grid, int rowCount) {
         Text depTime = new Text(FormatterFr.formatTime(leg.depTime()));
         depTime.getStyleClass().add("departure");
@@ -370,12 +382,12 @@ public record DetailUI(Node rootNode) {
         depPlatform.getStyleClass().add("departure");
         Text arrPlatform = new Text(FormatterFr.formatPlatformName(leg.arrStop()));
 
-        Circle depCircle = new Circle(3, Color.BLACK);
-        Circle arrCircle = new Circle(3, Color.BLACK);
+        Circle depCircle = new Circle(ANNOTATIONS_CIRCLE_RADIUS, ANNOTATIONS_CIRCLE_COLOR);
+        Circle arrCircle = new Circle(ANNOTATIONS_CIRCLE_RADIUS, ANNOTATIONS_CIRCLE_COLOR);
 
         ImageView vehicleImageView = new ImageView(VehicleIcons.iconFor(leg.vehicle()));
-        vehicleImageView.setFitHeight(31);
-        vehicleImageView.setFitWidth(31);
+        vehicleImageView.setFitHeight(VEHICLE_ICON_SIZE);
+        vehicleImageView.setFitWidth(VEHICLE_ICON_SIZE);
 
         Text destName = new Text(FormatterFr.formatRouteDestination(leg));
 
@@ -394,7 +406,16 @@ public record DetailUI(Node rootNode) {
         }
 
         TitledPane intermediateStopsPane = new TitledPane();
-        intermediateStopsPane.setText(intermediateStopsRowCount + " arrêts, " + FormatterFr.formatDuration(leg.duration()));
+        StringBuilder intermediateStopsPreviewBuilder =
+                new StringBuilder()
+                .append(intermediateStopsRowCount)
+                .append(" ")
+                .append("arrêts")
+                .append(", ")
+                .append(FormatterFr.formatDuration(leg.duration()));
+
+        intermediateStopsPane.setText(intermediateStopsPreviewBuilder.toString());
+
         intermediateStopsPane.setContent(intermediateStopsGrid);
 
         Accordion intermediateStopsView = new Accordion(intermediateStopsPane);
@@ -410,6 +431,7 @@ public record DetailUI(Node rootNode) {
 
         rowCount++;
 
+        // Different styling depending on if there are intermediate stops to display
         if (intermediateStopsRowCount > 0) {
             grid.add(vehicleImageView, 0, rowCount - 1, 1, 2);
             grid.add(intermediateStopsView, 2, rowCount, 2, 1);
@@ -427,9 +449,7 @@ public record DetailUI(Node rootNode) {
 
         grid.addCirclePair(new CirclePair(depCircle, arrCircle));
 
-        rowCount ++;
-
-        return rowCount;
+        return ++rowCount;
     }
 
     /**
@@ -442,9 +462,11 @@ public record DetailUI(Node rootNode) {
         try {
             Json geoJsonString = JourneyGeoJsonConverter.toGeoJson(journey);
 
-            String query = MAP_QUERY_PARAM + "=" + URLEncoder.encode(geoJsonString.toString(), StandardCharsets.UTF_8);
-//            URI uri = new URI(MAP_BASE_URL + "?data=" + encodedData);
-            URI uri = new URI(MAP_SCHEME, MAP_AUTHORITY, MAP_PATH,  query, null);
+            StringBuilder queryBuilder = new StringBuilder()
+                    .append(MAP_QUERY_PARAM)
+                    .append("=")
+                    .append(URLEncoder.encode(geoJsonString.toString(), StandardCharsets.UTF_8));
+            URI uri = new URI(MAP_SCHEME, MAP_AUTHORITY, MAP_PATH,  queryBuilder.toString(), null);
 
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(uri);
@@ -464,11 +486,14 @@ public record DetailUI(Node rootNode) {
      */
     private static void saveJourneyToCalendar(Journey journey, Node sourceNode) {
         LocalDateTime journeyDate = journey.depTime();
-        String defaultFileName = "voyage_" + journeyDate.format(DateTimeFormatter.ISO_LOCAL_DATE) + ".ics";
+        StringBuilder defaultFileNameBuilder = new StringBuilder()
+                .append("voyage_")
+                .append(journeyDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+                .append(".ics");
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Sauvegarder le voyage au format iCalendar");
-        fileChooser.setInitialFileName(defaultFileName);
+        fileChooser.setInitialFileName(defaultFileNameBuilder.toString());
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Fichiers iCalendar (*.ics)", "*.ics"));
 

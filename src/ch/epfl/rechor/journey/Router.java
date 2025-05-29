@@ -99,19 +99,6 @@ public record Router(TimeTable timeTable) {
             int arrivalTime = connections.arrMins(connId) + minutesBetween;
             frontBuilder.add(arrivalTime, 0, connId);
         }
-
-//        int transferArrRange = timeTable.transfers().arrivingAt(arrStationId);
-//
-//        for (int transferId = PackedRange.startInclusive(transferArrRange);
-//             transferId < PackedRange.endExclusive(transferArrRange);
-//             ++transferId) {
-//
-//            if (timeTable.transfers().depStationId(transferId) == timeTable.stationId(connArrStopId)) {
-//                // Add journey: connection + walk to destination
-//                int arrivalTime = connections.arrMins(connId) + timeTable.transfers().minutes(transferId);
-//                frontBuilder.add(arrivalTime, 0, connId);
-//            }
-//        }
     }
 
     /**

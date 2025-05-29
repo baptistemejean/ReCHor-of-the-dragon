@@ -83,7 +83,7 @@ public sealed interface Json permits Json.JArray, Json.JObject, Json.JString, Js
      *
      * @param value the numeric value
      */
-    public record JNumber(Double value) implements Json {
+    public record JNumber(double value) implements Json {
         /**
          * Returns the JSON string representation of this number.
          *

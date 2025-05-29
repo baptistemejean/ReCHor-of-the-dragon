@@ -21,8 +21,8 @@ public final class StopIndex {
      * @param alternativeNames Map of alternative names to their canonical counterparts
      */
     public StopIndex(List<String> stopNames, Map<String, String> alternativeNames) {
-        this.stopNames = new ArrayList<>(stopNames);
-        this.alternativeNames = new HashMap<>(alternativeNames);
+        this.stopNames = List.copyOf(stopNames);
+        this.alternativeNames = Map.copyOf(alternativeNames);
     }
 
     /**
@@ -33,11 +33,6 @@ public final class StopIndex {
      * @return A list of stop names matching the query, sorted by relevance
      */
     public List<String> stopsMatching(String query, int maxResults) {
-//        if (query == null || query.isEmpty() || query.trim().isEmpty() ) {
-//            // Return names in order when query is empty
-////            return stopNames.stream().limit(maxResults).toList();
-//            return Collections.emptyList();
-//        }
         // Split the query into sub-queries
         String[] subQueries = query.trim().split("\\s+");
 
@@ -71,7 +66,9 @@ public final class StopIndex {
             if (allSubQueriesMatch) {
                 // If it's an alternative name, map it to its canonical form
                 String canonicalName = alternativeNames.getOrDefault(name, name);
-                matchesWithScores.put(canonicalName, totalScore);
+
+                // Merge to avoid duplicates. Keep the highest score.
+                matchesWithScores.merge(canonicalName, totalScore, Integer::max);
             }
         }
 
@@ -88,9 +85,17 @@ public final class StopIndex {
      */
     private Pattern createPatternForSubQuery(String subQuery) {
         StringBuilder patternBuilder = new StringBuilder();
+        Pattern specialChars = Pattern.compile("[caeiou]", Pattern.UNICODE_CASE);
+        String[] parts = specialChars.splitWithDelimiters(subQuery, 0);
 
-        for (int i = 0; i < subQuery.length(); i++) {
-            addMatchingPattern(subQuery.charAt(i), patternBuilder);
+        for (String part: parts) {
+            // Find a special char add append the pattern to the builder or add the "constant"
+            // part with quotes
+            if (part.length() == 1 && specialChars.matcher(part).find()) {
+                addMatchingPattern(part.charAt(0), patternBuilder);
+            } else if (!part.isEmpty()) {
+                patternBuilder.append(Pattern.quote(part));
+            }
         }
 
         int flags = Pattern.UNICODE_CASE;
